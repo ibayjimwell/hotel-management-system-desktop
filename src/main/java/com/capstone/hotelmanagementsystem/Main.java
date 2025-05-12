@@ -78,6 +78,8 @@ public class Main extends javax.swing.JFrame {
         TopPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         TopPanel8 = new javax.swing.JPanel();
+        jButton8 = new javax.swing.JButton();
+        jButton7 = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
         jLabel29 = new javax.swing.JLabel();
         jScrollPane7 = new javax.swing.JScrollPane();
@@ -150,10 +152,10 @@ public class Main extends javax.swing.JFrame {
         TopPanel5 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
         TopPanel6 = new javax.swing.JPanel();
-        jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
-        jButton6 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
+        jButton6 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         RoomsTable = new javax.swing.JTable();
@@ -449,6 +451,19 @@ public class Main extends javax.swing.JFrame {
         TopPanel8.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         TopPanel8.setPreferredSize(new java.awt.Dimension(1009, 40));
         TopPanel8.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
+
+        jButton8.setBackground(new java.awt.Color(59, 130, 246));
+        jButton8.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        jButton8.setForeground(new java.awt.Color(3, 7, 18));
+        jButton8.setText("Refresh");
+        TopPanel8.add(jButton8);
+
+        jButton7.setBackground(new java.awt.Color(249, 250, 253));
+        jButton7.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        jButton7.setForeground(new java.awt.Color(3, 7, 18));
+        jButton7.setText("Add Staff");
+        TopPanel8.add(jButton7);
+
         UserPanel.add(TopPanel8, java.awt.BorderLayout.SOUTH);
 
         jLabel29.setFont(new java.awt.Font("Arial Black", 0, 20)); // NOI18N
@@ -1090,23 +1105,11 @@ public class Main extends javax.swing.JFrame {
         TopPanel6.setPreferredSize(new java.awt.Dimension(1009, 40));
         TopPanel6.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
 
-        jButton2.setBackground(new java.awt.Color(239, 68, 68));
-        jButton2.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
-        jButton2.setForeground(new java.awt.Color(3, 7, 18));
-        jButton2.setText("Check Out");
-        TopPanel6.add(jButton2);
-
         jButton3.setBackground(new java.awt.Color(59, 130, 246));
         jButton3.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
         jButton3.setForeground(new java.awt.Color(3, 7, 18));
         jButton3.setText("Occupied");
         TopPanel6.add(jButton3);
-
-        jButton6.setBackground(new java.awt.Color(59, 130, 246));
-        jButton6.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
-        jButton6.setForeground(new java.awt.Color(3, 7, 18));
-        jButton6.setText("Booked");
-        TopPanel6.add(jButton6);
 
         jButton4.setBackground(new java.awt.Color(22, 163, 74));
         jButton4.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
@@ -1114,10 +1117,22 @@ public class Main extends javax.swing.JFrame {
         jButton4.setText("Available");
         TopPanel6.add(jButton4);
 
+        jButton6.setBackground(new java.awt.Color(59, 130, 246));
+        jButton6.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        jButton6.setForeground(new java.awt.Color(3, 7, 18));
+        jButton6.setText("Refresh");
+        TopPanel6.add(jButton6);
+
+        jButton2.setBackground(new java.awt.Color(239, 68, 68));
+        jButton2.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        jButton2.setForeground(new java.awt.Color(3, 7, 18));
+        jButton2.setText("Remove");
+        TopPanel6.add(jButton2);
+
         jButton5.setBackground(new java.awt.Color(249, 250, 253));
         jButton5.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
         jButton5.setForeground(new java.awt.Color(3, 7, 18));
-        jButton5.setText("All");
+        jButton5.setText("Add");
         TopPanel6.add(jButton5);
 
         RoomPanel.add(TopPanel6, java.awt.BorderLayout.SOUTH);
@@ -1484,6 +1499,8 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
+    private javax.swing.JButton jButton7;
+    private javax.swing.JButton jButton8;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
