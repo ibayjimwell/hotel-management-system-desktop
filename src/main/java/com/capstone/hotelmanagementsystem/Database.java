@@ -135,7 +135,7 @@ public class Database {
         }
     }
     
-    // Add pending guest
+    // Checkin guest
     public boolean CheckinGuest(TransactionInfo info, String status) {
         try {
             
@@ -183,6 +183,60 @@ public class Database {
             return false;
         }
         
+    }
+    
+    // Save transaction
+    public boolean SaveTransaction(TransactionInfo info) {
+        try {
+            
+            String query = "INSERT INTO public.transactions(type, guest, people, category, duration, checkin, room, checkout, downpayment, total, staff, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            // Prepare the query
+            PreparedStatement ps = con.prepareStatement(query);
+
+            // Set the data
+            ps.setString(1, info.type);
+            ps.setInt(2, info.guest);
+            ps.setInt(3, info.people);
+            ps.setString(4, info.category);
+            ps.setString(5, info.duration);
+            ps.setDate(6, new Date(info.checkin.getTime()));
+            ps.setString(7, info.room);
+            ps.setDate(8, new Date(info.checkout.getTime()));
+            ps.setDouble(9, info.downpayment);
+            ps.setDouble(10, info.total);
+            ps.setInt(11, info.staff);
+            ps.setDate(12, new Date(info.date.getTime()));
+            
+            // Execute the query 
+            boolean result = ps.executeUpdate() > 0 ? true : false;
+            
+            return result;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(parent, "Something went wrong in the database connection.", "Save Transaction Failed", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        
+    }
+    
+    // Load transactions
+    public ResultSet LoadTransaction() {
+        try {
+            
+            String query = "SELECT * FROM public.transactions";
+            // Prepare the query
+            PreparedStatement ps = con.prepareStatement(query);
+
+            // Execute the query 
+            ResultSet result = ps.executeQuery();
+            return result;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(parent, "Something went wrong in loading transactions", "Transactions load failed", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
     }
     
 }

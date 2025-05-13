@@ -65,6 +65,10 @@ public class CheckinAndBooking extends javax.swing.JFrame {
         // Set the guest fullname
         GuestTextField.setText(fullname);
         
+        
+        // Set duration and price
+        
+        
     }
 
     /**
@@ -305,14 +309,19 @@ public class CheckinAndBooking extends javax.swing.JFrame {
                 CheckoutDatePicker.getDate(),
                 0,
                 0,
-                1
+                1,
+                new Date()
         );
         
         // Execute the database method for that
         boolean checkinOrBooked = db.CheckinGuest(transaction, isForBooking ? "Booked" : "Active");
         
         if (checkinOrBooked) {
-            JOptionPane.showMessageDialog(this, "Congratulations the transaction is successfuly proceed this transaction is recorded for you.", "Transaction Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Congratulations the transaction is successfull.", "Transaction Success", JOptionPane.INFORMATION_MESSAGE);
+            
+            // Save the transaction
+            boolean transact = db.SaveTransaction(transaction);
+           
             this.dispose();
         } else {
             JOptionPane.showMessageDialog(this, "Something went wrong double check the credentials.", "Transaction Failed", JOptionPane.ERROR_MESSAGE);

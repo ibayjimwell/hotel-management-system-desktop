@@ -9,6 +9,10 @@ import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 import javax.swing.JFrame;
@@ -31,6 +35,9 @@ public class Main extends javax.swing.JFrame {
         
         this.setExtendedState(JFrame.MAXIMIZED_BOTH); // Fullscreen when It's start
         this.db = new Database(this); // Connect to the database
+        
+        // Load the date and time today
+        this.loadDateAndTimeToday();
         
     }
 
@@ -68,12 +75,12 @@ public class Main extends javax.swing.JFrame {
         jLabel22 = new javax.swing.JLabel();
         jPanel6 = new javax.swing.JPanel();
         jLabel24 = new javax.swing.JLabel();
-        jLabel25 = new javax.swing.JLabel();
-        jLabel26 = new javax.swing.JLabel();
-        jLabel27 = new javax.swing.JLabel();
+        DayOfWeek = new javax.swing.JLabel();
+        Time = new javax.swing.JLabel();
+        Date = new javax.swing.JLabel();
         jLabel28 = new javax.swing.JLabel();
         jScrollPane6 = new javax.swing.JScrollPane();
-        jTable3 = new javax.swing.JTable();
+        TransactionsTable = new javax.swing.JTable();
         UserPanel = new javax.swing.JPanel();
         TopPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
@@ -312,7 +319,7 @@ public class Main extends javax.swing.JFrame {
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addContainerGap(167, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 692, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(111, 111, 111))
         );
@@ -335,7 +342,7 @@ public class Main extends javax.swing.JFrame {
         jPanel6Layout.setHorizontalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
-                .addContainerGap(154, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel24, javax.swing.GroupLayout.PREFERRED_SIZE, 692, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(124, 124, 124))
         );
@@ -347,34 +354,50 @@ public class Main extends javax.swing.JFrame {
                 .addContainerGap(110, Short.MAX_VALUE))
         );
 
-        jLabel25.setFont(new java.awt.Font("Arial Black", 0, 20)); // NOI18N
-        jLabel25.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        jLabel25.setText("Monday");
+        DayOfWeek.setFont(new java.awt.Font("Arial Black", 0, 20)); // NOI18N
+        DayOfWeek.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        DayOfWeek.setText("Monday");
 
-        jLabel26.setFont(new java.awt.Font("Arial Black", 0, 100)); // NOI18N
-        jLabel26.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel26.setText("12:30 AM");
+        Time.setFont(new java.awt.Font("Arial Black", 0, 100)); // NOI18N
+        Time.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        Time.setText("12:30 AM");
+        Time.setToolTipText("");
 
-        jLabel27.setFont(new java.awt.Font("Arial Black", 0, 40)); // NOI18N
-        jLabel27.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel27.setText("September 03, 2025");
+        Date.setFont(new java.awt.Font("Arial Black", 0, 40)); // NOI18N
+        Date.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        Date.setText("September 03, 2025");
 
         jLabel28.setFont(new java.awt.Font("Arial Black", 0, 18)); // NOI18N
         jLabel28.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel28.setText("Transactions Today:");
 
-        jTable3.setModel(new javax.swing.table.DefaultTableModel(
+        TransactionsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "Type", "Guest", "People", "Category", "Duration", "Checkins", "Room", "Checkout", "Downpayment", "Total", "Date"
             }
-        ));
-        jScrollPane6.setViewportView(jTable3);
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class, java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.Double.class, java.lang.Double.class, java.lang.Object.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane6.setViewportView(TransactionsTable);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -388,21 +411,18 @@ public class Main extends javax.swing.JFrame {
                             .addComponent(jLabel28, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(jLabel25, javax.swing.GroupLayout.PREFERRED_SIZE, 476, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(jLabel26)
-                                        .addGroup(jPanel2Layout.createSequentialGroup()
-                                            .addGap(26, 26, 26)
-                                            .addComponent(jLabel27))))
+                                    .addComponent(Time)
+                                    .addComponent(Date)
+                                    .addComponent(DayOfWeek, javax.swing.GroupLayout.PREFERRED_SIZE, 437, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGap(0, 332, Short.MAX_VALUE)))
-                        .addGap(149, 149, 149))
+                        .addGap(579, 579, 579))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jScrollPane6)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(231, 231, 231))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, 680, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addGap(91, 91, 91))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -410,12 +430,12 @@ public class Main extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGap(118, 118, 118)
-                        .addComponent(jLabel25, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(DayOfWeek, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel26, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Time, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel27, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(101, 101, 101)
+                        .addComponent(Date)
+                        .addGap(88, 88, 88)
                         .addComponent(jLabel28, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane6))
@@ -1253,6 +1273,34 @@ public class Main extends javax.swing.JFrame {
         
     }
     
+    // Showing the transactions
+    void LoadTransactions() {
+        
+        // Create table model
+        DefaultTableModel tableModel = (DefaultTableModel) TransactionsTable.getModel();
+        tableModel.setRowCount(0);
+        
+        // Execute Database method for that
+        ResultSet data = db.LoadTransaction();
+        
+        // Setting the data for rooms table
+        try {
+            
+            while (data.next()) {
+                Object[] row = {
+                    data.getString("type"),
+                    // CONTINUE HERE
+                };
+                tableModel.addRow(row);
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error on setting room for rooms table.", "Rooms Table Load Failed", JOptionPane.ERROR_MESSAGE);
+        }
+        
+    }
+    
     // Convert raw birthday data into Date object
     Date getBirthdayObject() {
        int day = Integer.parseInt(DayComboBox.getSelectedItem().toString());
@@ -1314,12 +1362,35 @@ public class Main extends javax.swing.JFrame {
         
     }
     
+    void loadDateAndTimeToday() {
+        
+        // Set the today date
+        LocalDate today = LocalDate.now();
+        
+        DateTimeFormatter todayFormatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy");
+        String formattedDate = today.format(todayFormatter);
+        Date.setText(formattedDate);
+        
+        // Set the now time
+        LocalTime now = LocalTime.now();
+
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a");
+        String formattedTime = now.format(timeFormatter);
+        Time.setText(formattedTime);
+        
+        // Set day of the week
+        String dayOfWeek = today.getDayOfWeek().toString();
+        DayOfWeek.setText(dayOfWeek);
+        
+    }
+    
     private void UserTabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UserTabActionPerformed
         ShowCard("User");
     }//GEN-LAST:event_UserTabActionPerformed
 
     private void DashboardTabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DashboardTabActionPerformed
         ShowCard("Dashboard");
+        this.loadDateAndTimeToday();
     }//GEN-LAST:event_DashboardTabActionPerformed
 
     private void BookingTabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BookingTabActionPerformed
@@ -1449,7 +1520,9 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JButton ClearSearchButton;
     private javax.swing.JPanel DashboardPanel;
     private javax.swing.JButton DashboardTab;
+    private javax.swing.JLabel Date;
     private javax.swing.JComboBox<String> DayComboBox;
+    private javax.swing.JLabel DayOfWeek;
     private javax.swing.JButton DeclineButton;
     private javax.swing.JTextField EmailTextField;
     private javax.swing.JRadioButton FemaleRadio;
@@ -1477,6 +1550,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JButton SubmitButton2;
     private javax.swing.JButton SubmitButton3;
     private javax.swing.JTextField TextFieldSearch;
+    private javax.swing.JLabel Time;
     private javax.swing.JPanel TopPanel;
     private javax.swing.JPanel TopPanel1;
     private javax.swing.JPanel TopPanel2;
@@ -1486,6 +1560,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JPanel TopPanel6;
     private javax.swing.JPanel TopPanel7;
     private javax.swing.JPanel TopPanel8;
+    private javax.swing.JTable TransactionsTable;
     private javax.swing.JPanel UserPanel;
     private javax.swing.JButton UserTab;
     private javax.swing.JComboBox<String> YearComboBox;
@@ -1516,11 +1591,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
-    private javax.swing.JLabel jLabel23;
     private javax.swing.JLabel jLabel24;
-    private javax.swing.JLabel jLabel25;
-    private javax.swing.JLabel jLabel26;
-    private javax.swing.JLabel jLabel27;
     private javax.swing.JLabel jLabel28;
     private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
@@ -1535,8 +1606,6 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
@@ -1553,7 +1622,6 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTable1;
     private javax.swing.JTable jTable2;
-    private javax.swing.JTable jTable3;
     private javax.swing.JTable jTable4;
     private javax.swing.JTable jTable5;
     // End of variables declaration//GEN-END:variables

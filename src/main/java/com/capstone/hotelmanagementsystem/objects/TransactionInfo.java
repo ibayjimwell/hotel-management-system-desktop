@@ -22,8 +22,9 @@ public class TransactionInfo {
     public double downpayment;
     public double total;
     public int staff;
+    public Date date;
 
-    public TransactionInfo(String type, int guest, int people, String category, String duration, Date checkin, String room, Date checkout, double downpayment, double total, int staff) {
+    public TransactionInfo(String type, int guest, int people, String category, String duration, Date checkin, String room, Date checkout, double downpayment, double total, int staff, Date date) {
         this.type = type;
         this.guest = guest;
         this.people = people;
@@ -35,6 +36,7 @@ public class TransactionInfo {
         this.downpayment = downpayment;
         this.total = total;
         this.staff = staff;
+        this.date = date;
     }
     
 }
