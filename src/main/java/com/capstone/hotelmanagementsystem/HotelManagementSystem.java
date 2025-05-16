@@ -4,7 +4,8 @@
 
 package com.capstone.hotelmanagementsystem;
 
-import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
+import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import javax.swing.UIManager;
 
 /**
@@ -16,7 +17,7 @@ public class HotelManagementSystem {
     public static void main(String args[]) {
         /* Set the look and feel */
         try {
-            UIManager.setLookAndFeel(new FlatLightLaf());
+            UIManager.setLookAndFeel(new FlatMacLightLaf());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

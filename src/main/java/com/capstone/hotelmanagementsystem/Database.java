@@ -17,6 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
@@ -135,96 +136,102 @@ public class Database {
         }
     }
     
+    // Load available room for checkin and booking
+    public ResultSet LoadRooms(boolean checkinAndBooking, String type) {
+        try {
+            
+            String query = "SELECT room_number FROM public.rooms WHERE room_type = ? AND status = ?";
+            // Prepare the query
+            PreparedStatement ps = con.prepareStatement(query);
+            
+            // Set the type
+            ps.setString(1, type);
+            ps.setString(2, "Available");
+
+            // Execute the query 
+            ResultSet result = ps.executeQuery();
+            return result;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(parent, "Something went wrong in loading available rooms", "Available rooms load failed", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+    }
+    
     // Checkin guest
     public boolean CheckinGuest(TransactionInfo info, String status) {
         try {
-            
             String query = "INSERT INTO public.check_ins(room_number, guest_id, check_in_date, check_out_date, status, number_of_guests, type) VALUES (?, ?, ?, ?, ?, ?, ?)";
-            // Prepare the query
             PreparedStatement ps = con.prepareStatement(query);
 
-            // Set the data
             ps.setString(1, info.room);
             ps.setInt(2, info.guest);
-            ps.setDate(3, new Date(info.checkin.getTime()));
-            ps.setDate(4, new Date(info.checkout.getTime()));
+            ps.setTimestamp(3, new Timestamp(info.checkin.getTime()));   // <-- changed
+            ps.setTimestamp(4, new Timestamp(info.checkout.getTime()));  // <-- changed
             ps.setString(5, status);
             ps.setInt(6, info.people);
             ps.setString(7, info.type);
-            
-            // Execute the query 
-            boolean result = ps.executeUpdate() > 0 ? true : false;
-            
+
+            boolean result = ps.executeUpdate() > 0;
+
             if (result) {
-                
-                // Change room status
                 String roomQuery = "UPDATE public.rooms SET status = ? WHERE room_number = ?";
                 PreparedStatement roomPs = con.prepareStatement(roomQuery);
-                
                 roomPs.setString(1, info.type.equalsIgnoreCase("booking") ? "Booked" : "Occupied");
                 roomPs.setString(2, info.room);
                 roomPs.executeUpdate();
-                
-                // Change guest status
+
                 String guestQuery = "UPDATE public.guests SET status = ? WHERE guest_id = ?";
                 PreparedStatement guestPs = con.prepareStatement(guestQuery);
-                
                 guestPs.setString(1, info.type.equalsIgnoreCase("booking") ? "Book" : "Checkin");
                 guestPs.setInt(2, info.guest);
                 guestPs.executeUpdate();
-                
             }
-            
+
             return result;
-            
+
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(parent, "Something went wrong in the database connection.", "Booking or Checkin Failed", JOptionPane.ERROR_MESSAGE);
             return false;
         }
-        
-    }
+}
     
     // Save transaction
     public boolean SaveTransaction(TransactionInfo info) {
         try {
-            
             String query = "INSERT INTO public.transactions(type, guest, people, category, duration, checkin, room, checkout, downpayment, total, staff, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            // Prepare the query
             PreparedStatement ps = con.prepareStatement(query);
 
-            // Set the data
             ps.setString(1, info.type);
             ps.setInt(2, info.guest);
             ps.setInt(3, info.people);
             ps.setString(4, info.category);
             ps.setString(5, info.duration);
-            ps.setDate(6, new Date(info.checkin.getTime()));
+            ps.setTimestamp(6, new Timestamp(info.checkin.getTime()));   // <-- here
             ps.setString(7, info.room);
-            ps.setDate(8, new Date(info.checkout.getTime()));
+            ps.setTimestamp(8, new Timestamp(info.checkout.getTime()));  // <-- here
             ps.setDouble(9, info.downpayment);
             ps.setDouble(10, info.total);
             ps.setInt(11, info.staff);
-            ps.setDate(12, new Date(info.date.getTime()));
-            
-            // Execute the query 
-            boolean result = ps.executeUpdate() > 0 ? true : false;
-            
+            ps.setTimestamp(12, new Timestamp(info.date.getTime()));     // <-- here
+
+            boolean result = ps.executeUpdate() > 0;
             return result;
-            
+
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(parent, "Something went wrong in the database connection.", "Save Transaction Failed", JOptionPane.ERROR_MESSAGE);
             return false;
         }
-        
-    }
+}
     
     // Load transactions
     public ResultSet LoadTransaction() {
         try {
             
-            String query = "SELECT * FROM public.transactions";
+            String query = "SELECT b.*, g.first_name AS guest_first_name, g.last_name AS guest_last_name, s.first_name AS staff_first_name, s.last_name AS staff_last_name FROM public.transactions b JOIN guests g ON b.guest = g.guest_id JOIN staffs s ON b.staff = s.id ORDER BY date DESC";
             // Prepare the query
             PreparedStatement ps = con.prepareStatement(query);
 
@@ -239,5 +246,142 @@ public class Database {
         }
     }
     
+    // Load staffs
+    public ResultSet LoadStaffs() {
+        try {
+            
+            String query = "SELECT * FROM public.staffs";
+            // Prepare the query
+            PreparedStatement ps = con.prepareStatement(query);
+
+            // Execute the query 
+            ResultSet result = ps.executeQuery();
+            return result;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(parent, "Something went wrong in loading staffs", "Staffs load failed", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+    }
+    
+    // Load staffs
+    public ResultSet SearchGuest(Object search) {
+        try {
+            
+            String query = "SELECT * FROM public.guests WHERE " +
+               "CAST(guest_id AS TEXT) LIKE ? OR " +
+               "first_name ILIKE ? OR " +
+               "middle_name ILIKE ? OR " +
+               "last_name ILIKE ? OR " +
+               "email ILIKE ? OR " +
+               "phone_number ILIKE ?";
+
+            PreparedStatement ps = con.prepareStatement(query);
+            String keyword = "%" + search.toString() + "%";
+
+            // Set the parameters (6 total)
+            for (int i = 1; i <= 6; i++) {
+                ps.setString(i, keyword);
+            }
+
+            // Execute the query 
+            ResultSet result = ps.executeQuery();
+            return result;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(parent, "Something went wrong in searching guest", "Guest search failed", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+    }
+    
+    // Load room types name 
+    public ResultSet LoadRoomTypeName() {
+        try {
+            
+            String query = "SELECT type FROM public.room_types";
+            // Prepare the query
+            PreparedStatement ps = con.prepareStatement(query);
+
+            // Execute the query 
+            ResultSet result = ps.executeQuery();
+            return result;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(parent, "Something went wrong in loading room type names", "Room type names load failed", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+    }
+    
+    // Load room prices 
+    public ResultSet LoadRoomPrice(String type) {
+        try {
+            
+            String query = "SELECT * FROM public.room_types WHERE type = ?";
+            // Prepare the query
+            PreparedStatement ps = con.prepareStatement(query);
+            
+            // Set the type 
+            ps.setString(1, type);
+
+            // Execute the query 
+            ResultSet result = ps.executeQuery();
+            return result;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(parent, "Something went wrong in loading room type names", "Room type names load failed", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+    }
+    
+    // Load Bookings and Checkins
+    public ResultSet LoadBookingsAndCheckin() {
+        try {
+            
+            String query = "SELECT c.*, g.last_name, g.first_name, g.middle_name " +
+               "FROM public.check_ins c " +
+               "JOIN public.guests g ON c.guest_id = g.guest_id";
+            // Prepare the query
+            PreparedStatement ps = con.prepareStatement(query);
+
+            // Execute the query 
+            ResultSet result = ps.executeQuery();
+            return result;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(parent, "Something went wrong in loading bookings and checkins", "Bookings and Checkins load failed", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+    }
+    
+    // Load Bookings and Checkins
+    public boolean ChangeCheckinStatus(int id, String newStatus) {
+        try {
+            
+            String query = "UPDATE public.check_ins SET status = ? WHERE check_in_id = ?";
+            // Prepare the query
+            PreparedStatement ps = con.prepareStatement(query);
+            
+            // Set the data
+            ps.setString(1, newStatus);
+            ps.setInt(2, id);
+
+            // Execute the query 
+            boolean result = ps.executeUpdate() > 0;
+            return result;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(parent, "Something went wrong in changing checkins status", "Failed to change checkin status", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+    
 }
+
+// 
     

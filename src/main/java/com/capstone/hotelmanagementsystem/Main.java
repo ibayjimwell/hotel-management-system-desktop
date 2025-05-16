@@ -9,12 +9,13 @@ import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.DayOfWeek;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
+import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -38,7 +39,10 @@ public class Main extends javax.swing.JFrame {
         
         // Load the date and time today
         this.loadDateAndTimeToday();
-        
+        // Load the transactions
+        this.LoadTransactions();
+        // Set the SearchList default model
+        SearchList.setModel(new DefaultListModel<>());
     }
 
     /**
@@ -90,10 +94,10 @@ public class Main extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         jLabel29 = new javax.swing.JLabel();
         jScrollPane7 = new javax.swing.JScrollPane();
-        jTable4 = new javax.swing.JTable();
+        StaffsTable = new javax.swing.JTable();
         jLabel30 = new javax.swing.JLabel();
         jScrollPane8 = new javax.swing.JScrollPane();
-        jTable5 = new javax.swing.JTable();
+        LogsTable = new javax.swing.JTable();
         BookingPanel = new javax.swing.JPanel();
         TopPanel3 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
@@ -101,10 +105,10 @@ public class Main extends javax.swing.JFrame {
         jTabbedPane1 = new javax.swing.JTabbedPane();
         BookingsToolBar = new javax.swing.JToolBar();
         jScrollPane4 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        BookingTable = new javax.swing.JTable();
         CheckinsToolBar = new javax.swing.JToolBar();
         jScrollPane5 = new javax.swing.JScrollPane();
-        jTable2 = new javax.swing.JTable();
+        CheckinTable = new javax.swing.JTable();
         GuestPanel = new javax.swing.JPanel();
         TopPanel4 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
@@ -147,14 +151,14 @@ public class Main extends javax.swing.JFrame {
         BookingButton = new javax.swing.JButton();
         DeclineButton = new javax.swing.JButton();
         jLabel20 = new javax.swing.JLabel();
-        RefreshButton = new javax.swing.JButton();
         jScrollPane3 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList<>();
-        TextFieldSearch = new javax.swing.JTextField();
+        SearchList = new javax.swing.JList<>();
+        SearchTextField = new javax.swing.JTextField();
         ClearSearchButton = new javax.swing.JButton();
-        SubmitButton1 = new javax.swing.JButton();
+        SearchSubmitButton = new javax.swing.JButton();
         SubmitButton2 = new javax.swing.JButton();
         SubmitButton3 = new javax.swing.JButton();
+        RefreshButton = new javax.swing.JButton();
         RoomPanel = new javax.swing.JPanel();
         TopPanel5 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
@@ -319,16 +323,16 @@ public class Main extends javax.swing.JFrame {
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 692, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(111, 111, 111))
+                .addContainerGap(82, Short.MAX_VALUE)
+                .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 385, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(76, 76, 76))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addContainerGap(104, Short.MAX_VALUE)
+                .addContainerGap(108, Short.MAX_VALUE)
                 .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 243, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(88, 88, 88))
+                .addGap(84, 84, 84))
         );
 
         jPanel6.setBackground(new java.awt.Color(153, 153, 153));
@@ -342,16 +346,16 @@ public class Main extends javax.swing.JFrame {
         jPanel6Layout.setHorizontalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel24, javax.swing.GroupLayout.PREFERRED_SIZE, 692, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(124, 124, 124))
+                .addContainerGap(63, Short.MAX_VALUE)
+                .addComponent(jLabel24, javax.swing.GroupLayout.PREFERRED_SIZE, 419, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(61, 61, 61))
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel6Layout.createSequentialGroup()
-                .addGap(89, 89, 89)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
+                .addContainerGap(102, Short.MAX_VALUE)
                 .addComponent(jLabel24, javax.swing.GroupLayout.PREFERRED_SIZE, 243, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(110, Short.MAX_VALUE))
+                .addGap(97, 97, 97))
         );
 
         DayOfWeek.setFont(new java.awt.Font("Arial Black", 0, 20)); // NOI18N
@@ -371,22 +375,23 @@ public class Main extends javax.swing.JFrame {
         jLabel28.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel28.setText("Transactions Today:");
 
+        TransactionsTable.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         TransactionsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null}
+                {null, null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "Type", "Guest", "People", "Category", "Duration", "Checkins", "Room", "Checkout", "Downpayment", "Total", "Date"
+                "Type", "Guest", "People", "Category", "Duration", "Checkins", "Room", "Checkout", "Downpayment", "Total", "Staff", "Date"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class, java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.Double.class, java.lang.Double.class, java.lang.Object.class
+                java.lang.String.class, java.lang.String.class, java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.Double.class, java.lang.Double.class, java.lang.String.class, java.lang.Object.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false, false, false, false, false
+                false, false, false, false, false, false, false, false, false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -397,6 +402,11 @@ public class Main extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
+        TransactionsTable.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        TransactionsTable.setSelectionBackground(new java.awt.Color(55, 48, 163));
+        TransactionsTable.setSelectionForeground(new java.awt.Color(249, 250, 253));
+        TransactionsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        TransactionsTable.setShowGrid(true);
         jScrollPane6.setViewportView(TransactionsTable);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -415,13 +425,13 @@ public class Main extends javax.swing.JFrame {
                                     .addComponent(Date)
                                     .addComponent(DayOfWeek, javax.swing.GroupLayout.PREFERRED_SIZE, 437, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGap(0, 332, Short.MAX_VALUE)))
-                        .addGap(579, 579, 579))
+                        .addGap(716, 716, 716))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jScrollPane6)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, 680, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(91, 91, 91))
         );
         jPanel2Layout.setVerticalGroup(
@@ -490,35 +500,73 @@ public class Main extends javax.swing.JFrame {
         jLabel29.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel29.setText("Staffs");
 
-        jTable4.setModel(new javax.swing.table.DefaultTableModel(
+        StaffsTable.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        StaffsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "ID", "Last Name", "First Name", "Middle Name", "Gender", "Email", "Phone", "Username", "Password"
             }
-        ));
-        jScrollPane7.setViewportView(jTable4);
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        StaffsTable.setSelectionBackground(new java.awt.Color(55, 48, 163));
+        StaffsTable.setSelectionForeground(new java.awt.Color(249, 250, 253));
+        StaffsTable.setShowGrid(true);
+        jScrollPane7.setViewportView(StaffsTable);
 
         jLabel30.setFont(new java.awt.Font("Arial Black", 0, 20)); // NOI18N
         jLabel30.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel30.setText("Logs");
 
-        jTable5.setModel(new javax.swing.table.DefaultTableModel(
+        LogsTable.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        LogsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "Staff", "In", "Out", "Bookings", "Checkins", "Date"
             }
-        ));
-        jScrollPane8.setViewportView(jTable5);
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.Object.class, java.lang.Object.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Object.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        LogsTable.setSelectionBackground(new java.awt.Color(55, 48, 163));
+        LogsTable.setSelectionForeground(new java.awt.Color(249, 250, 253));
+        LogsTable.setShowGrid(true);
+        jScrollPane8.setViewportView(LogsTable);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -526,29 +574,27 @@ public class Main extends javax.swing.JFrame {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(24, 24, 24)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel29, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane7, javax.swing.GroupLayout.DEFAULT_SIZE, 588, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel30, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(996, Short.MAX_VALUE))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel29, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 1120, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel30, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(476, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(23, 23, 23)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel29, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel30, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel30, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel29, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(464, Short.MAX_VALUE))
+                    .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(470, Short.MAX_VALUE))
         );
 
         UserPanel.add(jPanel1, java.awt.BorderLayout.CENTER);
@@ -580,18 +626,37 @@ public class Main extends javax.swing.JFrame {
         BookingsToolBar.setRollover(true);
         BookingsToolBar.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        BookingTable.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        BookingTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "ID", "Guest ID", "Guest", "Checkin", "Checkout", "People", "Room Number", "Time Left", "Status"
             }
-        ));
-        jScrollPane4.setViewportView(jTable1);
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Integer.class, java.lang.Integer.class, java.lang.String.class, java.lang.Object.class, java.lang.Object.class, java.lang.Integer.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        BookingTable.setSelectionBackground(new java.awt.Color(55, 48, 163));
+        BookingTable.setSelectionForeground(new java.awt.Color(249, 250, 253));
+        BookingTable.setShowGrid(true);
+        jScrollPane4.setViewportView(BookingTable);
 
         BookingsToolBar.add(jScrollPane4);
 
@@ -600,18 +665,37 @@ public class Main extends javax.swing.JFrame {
         CheckinsToolBar.setRollover(true);
         CheckinsToolBar.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
 
-        jTable2.setModel(new javax.swing.table.DefaultTableModel(
+        CheckinTable.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        CheckinTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "ID", "Guest ID", "Guest", "Checkin", "Checkout", "People", "Room Number", "Time Remaining", "Status"
             }
-        ));
-        jScrollPane5.setViewportView(jTable2);
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Integer.class, java.lang.Integer.class, java.lang.String.class, java.lang.Object.class, java.lang.Object.class, java.lang.Integer.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        CheckinTable.setSelectionBackground(new java.awt.Color(55, 48, 163));
+        CheckinTable.setSelectionForeground(new java.awt.Color(249, 250, 253));
+        CheckinTable.setShowGrid(true);
+        jScrollPane5.setViewportView(CheckinTable);
 
         CheckinsToolBar.add(jScrollPane5);
 
@@ -737,6 +821,11 @@ public class Main extends javax.swing.JFrame {
         ClearButton.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         ClearButton.setForeground(new java.awt.Color(3, 7, 18));
         ClearButton.setText("Clear");
+        ClearButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ClearButtonActionPerformed(evt);
+            }
+        });
 
         SubmitButton.setBackground(new java.awt.Color(55, 48, 163));
         SubmitButton.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
@@ -905,7 +994,7 @@ public class Main extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        PendingGuestTable.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        PendingGuestTable.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
         PendingGuestTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null, null, null},
@@ -932,7 +1021,6 @@ public class Main extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
-        PendingGuestTable.setGridColor(new java.awt.Color(80, 82, 84));
         PendingGuestTable.setSelectionBackground(new java.awt.Color(55, 48, 163));
         PendingGuestTable.setSelectionForeground(new java.awt.Color(249, 250, 253));
         PendingGuestTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -974,36 +1062,31 @@ public class Main extends javax.swing.JFrame {
         jLabel20.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
         jLabel20.setText("Pending Guest:");
 
-        RefreshButton.setBackground(new java.awt.Color(55, 48, 163));
-        RefreshButton.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
-        RefreshButton.setForeground(new java.awt.Color(249, 250, 253));
-        RefreshButton.setText("Refresh");
-        RefreshButton.setBorder(null);
-        RefreshButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                RefreshButtonActionPerformed(evt);
-            }
-        });
-
-        jList1.setModel(new javax.swing.AbstractListModel<String>() {
+        SearchList.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Search..." };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane3.setViewportView(jList1);
+        SearchList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane3.setViewportView(SearchList);
 
         ClearSearchButton.setBackground(new java.awt.Color(249, 250, 253));
         ClearSearchButton.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         ClearSearchButton.setForeground(new java.awt.Color(3, 7, 18));
         ClearSearchButton.setText("Clear");
-
-        SubmitButton1.setBackground(new java.awt.Color(55, 48, 163));
-        SubmitButton1.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
-        SubmitButton1.setForeground(new java.awt.Color(249, 250, 253));
-        SubmitButton1.setText("Search");
-        SubmitButton1.addActionListener(new java.awt.event.ActionListener() {
+        ClearSearchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                SubmitButton1ActionPerformed(evt);
+                ClearSearchButtonActionPerformed(evt);
+            }
+        });
+
+        SearchSubmitButton.setBackground(new java.awt.Color(55, 48, 163));
+        SearchSubmitButton.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
+        SearchSubmitButton.setForeground(new java.awt.Color(249, 250, 253));
+        SearchSubmitButton.setText("Search");
+        SearchSubmitButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SearchSubmitButtonActionPerformed(evt);
             }
         });
 
@@ -1027,6 +1110,16 @@ public class Main extends javax.swing.JFrame {
             }
         });
 
+        RefreshButton.setBackground(new java.awt.Color(55, 48, 163));
+        RefreshButton.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
+        RefreshButton.setForeground(new java.awt.Color(249, 250, 253));
+        RefreshButton.setText("Refresh");
+        RefreshButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                RefreshButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout GridPanelLayout = new javax.swing.GroupLayout(GridPanel);
         GridPanel.setLayout(GridPanelLayout);
         GridPanelLayout.setHorizontalGroup(
@@ -1039,12 +1132,12 @@ public class Main extends javax.swing.JFrame {
                         .addGroup(GridPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(GridPanelLayout.createSequentialGroup()
-                                .addComponent(TextFieldSearch, javax.swing.GroupLayout.PREFERRED_SIZE, 281, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(SearchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 281, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(ClearSearchButton, javax.swing.GroupLayout.PREFERRED_SIZE, 131, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(GridPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(SubmitButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(SearchSubmitButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(SubmitButton2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(SubmitButton3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1056,13 +1149,16 @@ public class Main extends javax.swing.JFrame {
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 1371, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(GridPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(GridPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(BookingButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
-                                .addComponent(CheckinButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addComponent(RefreshButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, GridPanelLayout.createSequentialGroup()
+                                .addGap(0, 1, Short.MAX_VALUE)
+                                .addComponent(DeclineButton, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(GridPanelLayout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(DeclineButton, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                .addGroup(GridPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(GridPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(BookingButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+                                        .addComponent(CheckinButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addComponent(RefreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         GridPanelLayout.setVerticalGroup(
@@ -1091,11 +1187,10 @@ public class Main extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(SubmitButton3)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(GridPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(SubmitButton1, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(GridPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(TextFieldSearch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(ClearSearchButton, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addGroup(GridPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(SearchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(SearchSubmitButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(ClearSearchButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addComponent(jScrollPane2))
                 .addContainerGap(89, Short.MAX_VALUE))
         );
@@ -1157,6 +1252,7 @@ public class Main extends javax.swing.JFrame {
 
         RoomPanel.add(TopPanel6, java.awt.BorderLayout.SOUTH);
 
+        RoomsTable.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
         RoomsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -1273,7 +1369,41 @@ public class Main extends javax.swing.JFrame {
         
     }
     
-    // Showing the transactions
+    // Showing the staffs
+    void LoadStaffs() {
+        
+        // Create table model
+        DefaultTableModel tableModel = (DefaultTableModel) StaffsTable.getModel();
+        tableModel.setRowCount(0);
+        
+        // Execute Database method for that
+        ResultSet data = db.LoadStaffs();
+        
+        // Setting the data for rooms table
+        try {
+            
+            while (data.next()) {
+                Object[] row = {
+                    data.getInt("id"),
+                    data.getString("last_name"),
+                    data.getString("first_name"),
+                    data.getString("middle_name"),
+                    data.getString("gender"),
+                    data.getString("email_address"),
+                    data.getString("phone_number")
+                        
+                };
+                tableModel.addRow(row);
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error on setting staff for staffs table.", "Staffs Load Failed", JOptionPane.ERROR_MESSAGE);
+        }
+        
+    }
+    
+    // Showing the bookings and checkins
     void LoadTransactions() {
         
         // Create table model
@@ -1289,17 +1419,103 @@ public class Main extends javax.swing.JFrame {
             while (data.next()) {
                 Object[] row = {
                     data.getString("type"),
-                    // CONTINUE HERE
+                    data.getString("guest_last_name") + " " + data.getString("guest_first_name"),
+                    data.getInt("people"),
+                    data.getString("category"),
+                    data.getString("duration"),
+                    data.getTimestamp("checkin"),
+                    data.getString("room"),
+                    data.getTimestamp("checkout"),
+                    data.getDouble("downpayment"),
+                    data.getDouble("total"),
+                    data.getString("staff_last_name") + " " + data.getString("staff_first_name"),
+                    data.getDate("date"),
                 };
                 tableModel.addRow(row);
             }
             
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error on setting room for rooms table.", "Rooms Table Load Failed", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error on loading transactions table.", "Transactions Table Load Failed", JOptionPane.ERROR_MESSAGE);
         }
         
     }
+    
+    // Showing the bookings and checkins
+    void LoadBookingsAndCheckins() {
+        // Create table model
+        DefaultTableModel BookingTableModel = (DefaultTableModel) BookingTable.getModel();
+        BookingTableModel.setRowCount(0);
+
+        DefaultTableModel CheckinTableModel = (DefaultTableModel) CheckinTable.getModel();
+        CheckinTableModel.setRowCount(0);
+
+        // Execute Database method for that
+        ResultSet data = db.LoadBookingsAndCheckin();
+
+        try {
+            while (data.next()) {
+                int checkInId = data.getInt("check_in_id");
+                int guestId = data.getInt("guest_id");
+                String fullName = data.getString("last_name") + " " + data.getString("first_name") + " " + data.getString("middle_name");
+                Timestamp checkin = data.getTimestamp("check_in_date");
+                Timestamp checkout = data.getTimestamp("check_out_date");
+                int numberOfGuests = data.getInt("number_of_guests");
+                String roomNumber = data.getString("room_number");
+                String status = data.getString("status");
+
+                long now = System.currentTimeMillis();
+
+                if (status.equals("Booked") || status.equals("Need to checkin")) {
+                    long millisUntilCheckin = checkin.getTime() - now;
+                    long hoursUntilCheckin = millisUntilCheckin / (1000 * 60 * 60);
+                    long daysUntilCheckin = hoursUntilCheckin / 24;
+
+                    if (millisUntilCheckin <= 0 && !status.equals("Need to checkin")) {
+                        db.ChangeCheckinStatus(checkInId, "Need to checkin");
+                        status = "Need to checkin";
+                    }
+
+                    Object[] row = {
+                        checkInId,
+                        fullName,
+                        checkin,
+                        checkout,
+                        numberOfGuests,
+                        roomNumber,
+                        daysUntilCheckin + " days / " + hoursUntilCheckin + " hours",
+                        status
+                    };
+                    BookingTableModel.addRow(row);
+
+                } else if (status.equals("Active") || status.equals("Need to checkout")) {
+                    long millisRemaining = checkout.getTime() - now;
+                    long hoursRemaining = millisRemaining / (1000 * 60 * 60);
+
+                    if (millisRemaining <= 0 && !status.equals("Need to checkout")) {
+                        db.ChangeCheckinStatus(checkInId, "Need to checkout");
+                        status = "Need to checkout";
+                    }
+
+                    Object[] row = {
+                        checkInId,
+                        fullName,
+                        checkin,
+                        checkout,
+                        numberOfGuests,
+                        roomNumber,
+                        hoursRemaining + " hours",
+                        status
+                    };
+                    CheckinTableModel.addRow(row);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error on loading bookings and checkins.", "Booking or Checkin Table Load Failed", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     
     // Convert raw birthday data into Date object
     Date getBirthdayObject() {
@@ -1386,15 +1602,18 @@ public class Main extends javax.swing.JFrame {
     
     private void UserTabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UserTabActionPerformed
         ShowCard("User");
+        this.LoadStaffs();
     }//GEN-LAST:event_UserTabActionPerformed
 
     private void DashboardTabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DashboardTabActionPerformed
         ShowCard("Dashboard");
         this.loadDateAndTimeToday();
+        this.LoadTransactions();
     }//GEN-LAST:event_DashboardTabActionPerformed
 
     private void BookingTabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BookingTabActionPerformed
         ShowCard("Booking");
+        this.LoadBookingsAndCheckins();
     }//GEN-LAST:event_BookingTabActionPerformed
 
     private void GuestTabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GuestTabActionPerformed
@@ -1434,43 +1653,104 @@ public class Main extends javax.swing.JFrame {
     private void SubmitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SubmitButtonActionPerformed
        // SUBMIT ACTION EVENT ( GUEST FORM )
        
-       // Get if a Male or Female
-       String gender = MaleRadio.isSelected() ? "Male" : "Female";
+       boolean isFormValid = true;
        
-       // Convert raw Date data into Date object
-       Date birthday = this.getBirthdayObject();
+       if (FirstNameTextField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Double check the credentials make sure to fill-up all required field.", "The First Name is required.", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        }
        
-       // Create a guest object info
-       GuestInfo guest = new GuestInfo(
-               FirstNameTextField.getText(),
-               MiddleNameTextField.getText(),
-               LastNameTextField.getText(),
-               gender,
-               birthday,
-               Integer.parseInt(AgeTextField.getText()),
-               PhoneTextField.getText(),
-               EmailTextField.getText()
-       );
+       if (LastNameTextField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Double check the credentials make sure to fill-up all required field.", "The Last Name is required.", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        }
        
-       // Execute Databse method for that
-       boolean addGuest = db.AddGuest(guest);
-       
-       if (addGuest) {
-           JOptionPane.showMessageDialog(this, "Added Guest " + guest.last_name + " " + guest.first_name + " as pending guest.", "Guest Added Success", JOptionPane.INFORMATION_MESSAGE);
-           this.LoadPendingGuest();
-       } else {
-           
+       if (!MaleRadio.isSelected() && !FemaleRadio.isSelected()) {
+           JOptionPane.showMessageDialog(this, "Double check the credentials make sure to select a gender.", "The Gender is required.", JOptionPane.ERROR_MESSAGE);
+           isFormValid = false;
        }
        
+       if (EmailTextField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Double check the credentials make sure to fill-up all required field.", "The Email Address is required.", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        }
+       
+       if (PhoneTextField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Double check the credentials make sure to fill-up all required field.", "The Phone Number is required.", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        }
+       
+       if (isFormValid) {
+           
+           // Get if a Male or Female
+            String gender = MaleRadio.isSelected() ? "Male" : "Female";
+
+            // Convert raw Date data into Date object
+            Date birthday = this.getBirthdayObject();
+
+            // Create a guest object info
+            GuestInfo guest = new GuestInfo(
+                    FirstNameTextField.getText(),
+                    MiddleNameTextField.getText(),
+                    LastNameTextField.getText(),
+                    gender,
+                    birthday,
+                    Integer.parseInt(AgeTextField.getText()),
+                    PhoneTextField.getText(),
+                    EmailTextField.getText()
+            );
+
+            // Execute Databse method for that
+            boolean addGuest = db.AddGuest(guest);
+
+            if (addGuest) {
+                JOptionPane.showMessageDialog(this, "Added Guest " + guest.last_name + " " + guest.first_name + " as pending guest.", "Guest Added Success", JOptionPane.INFORMATION_MESSAGE);
+                this.LoadPendingGuest();
+                this.ClearButtonActionPerformed(evt);
+            }
+           
+       }
+         
     }//GEN-LAST:event_SubmitButtonActionPerformed
 
-    private void RefreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RefreshButtonActionPerformed
-       this.LoadPendingGuest();
-    }//GEN-LAST:event_RefreshButtonActionPerformed
+    private void SearchSubmitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SearchSubmitButtonActionPerformed
+        if (SearchTextField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "If you need to search something provide a keyword to the search text field.", "The search field is empty.", JOptionPane.ERROR_MESSAGE);
+        } else {
+            try {
+                // Call the search method
+                ResultSet result = db.SearchGuest(SearchTextField.getText());
 
-    private void SubmitButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SubmitButton1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_SubmitButton1ActionPerformed
+                // Clear the current list
+                DefaultListModel<String> model = (DefaultListModel<String>) SearchList.getModel();
+                model.clear();
+
+                boolean hasResult = false;
+
+                // Loop through result set and format entries
+                while (result.next()) {
+                    int id = result.getInt("guest_id");
+                    String first = result.getString("first_name");
+                    String last = result.getString("last_name");
+                    String email = result.getString("email");
+                    String phone = result.getString("phone_number");
+
+                    String entry = id + " | " + last + " " + first + " | " + email + " | " + phone;
+                    model.addElement(entry);
+
+                    hasResult = true;
+                }
+
+                if (!hasResult) {
+                    model.addElement("No item found.");
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Something went wrong while retrieving guest data.", "Search Failed", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_SearchSubmitButtonActionPerformed
 
     private void CheckinButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CheckinButtonActionPerformed
         Object selectedGuest = this.getSelectedGuestFromTable();
@@ -1503,6 +1783,28 @@ public class Main extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_SearchBookingButtonActionPerformed
 
+    private void ClearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ClearButtonActionPerformed
+        FirstNameTextField.setText("");
+        MiddleNameTextField.setText("");
+        LastNameTextField.setText("");
+        GenderButtonGroup.clearSelection();
+        EmailTextField.setText("");
+        PhoneTextField.setText("");
+    }//GEN-LAST:event_ClearButtonActionPerformed
+
+    private void RefreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RefreshButtonActionPerformed
+        this.LoadPendingGuest();
+    }//GEN-LAST:event_RefreshButtonActionPerformed
+
+    private void ClearSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ClearSearchButtonActionPerformed
+         // Clear the text field
+        SearchTextField.setText("");
+
+        // Clear the list
+        DefaultListModel<String> model = (DefaultListModel<String>) SearchList.getModel();
+        model.clear();
+    }//GEN-LAST:event_ClearSearchButtonActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -1513,8 +1815,10 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JButton BookingButton;
     private javax.swing.JPanel BookingPanel;
     private javax.swing.JButton BookingTab;
+    private javax.swing.JTable BookingTable;
     private javax.swing.JToolBar BookingsToolBar;
     private javax.swing.JButton CheckinButton;
+    private javax.swing.JTable CheckinTable;
     private javax.swing.JToolBar CheckinsToolBar;
     private javax.swing.JButton ClearButton;
     private javax.swing.JButton ClearSearchButton;
@@ -1534,6 +1838,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JButton GuestTab;
     private javax.swing.JTextField LastNameTextField;
     private javax.swing.JButton LogoutTab;
+    private javax.swing.JTable LogsTable;
     private javax.swing.JPanel MainPanel;
     private javax.swing.JRadioButton MaleRadio;
     private javax.swing.JTextField MiddleNameTextField;
@@ -1544,12 +1849,14 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JPanel RoomPanel;
     private javax.swing.JButton RoomTab;
     private javax.swing.JTable RoomsTable;
+    private javax.swing.JList<String> SearchList;
+    private javax.swing.JButton SearchSubmitButton;
+    private javax.swing.JTextField SearchTextField;
     private javax.swing.JPanel SidePanel;
+    private javax.swing.JTable StaffsTable;
     private javax.swing.JButton SubmitButton;
-    private javax.swing.JButton SubmitButton1;
     private javax.swing.JButton SubmitButton2;
     private javax.swing.JButton SubmitButton3;
-    private javax.swing.JTextField TextFieldSearch;
     private javax.swing.JLabel Time;
     private javax.swing.JPanel TopPanel;
     private javax.swing.JPanel TopPanel1;
@@ -1602,7 +1909,6 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JList<String> jList1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -1620,9 +1926,5 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JSeparator jSeparator4;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTable jTable2;
-    private javax.swing.JTable jTable4;
-    private javax.swing.JTable jTable5;
     // End of variables declaration//GEN-END:variables
 }
