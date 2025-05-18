@@ -5,20 +5,40 @@
 package com.capstone.hotelmanagementsystem;
 
 import com.capstone.hotelmanagementsystem.objects.GuestInfo;
+import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 import javax.swing.DefaultListModel;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPasswordField;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.general.DefaultPieDataset;
 
 /**
  *
@@ -26,16 +46,50 @@ import javax.swing.table.DefaultTableModel;
  */
 public class Main extends javax.swing.JFrame {
     Database db = null;
+    int staff_id;
+    boolean isAdmin = false;
+    String fullname = "";
+    LocalTime StaffIn = LocalTime.now();
+    LocalTime StaffOut;
 
     /**
      * Creates new form Main
      */
-    public Main() {
+    
+    // CONSTRUCTOR
+    public Main(int staff_id, boolean isAdmin, String fullanme) {
+        this.StaffIn = LocalTime.now();
         
         initComponents();
         
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                // Trigger the logout confirmation dialog
+                LogoutTabActionPerformed(null);  // You can pass null since evt isn't used
+            }
+        });
+        
         this.setExtendedState(JFrame.MAXIMIZED_BOTH); // Fullscreen when It's start
         this.db = new Database(this); // Connect to the database
+        this.staff_id = staff_id;
+        this.isAdmin = isAdmin;
+        this.fullname = fullanme;
+        
+        // Change the status text value color
+        applyStatusColumnRenderer(BookingTable, "BookingTable", /* status column index */ 8);
+        applyStatusColumnRenderer(CheckinTable, "CheckinTable", /* status column index */ 8);
+        applyStatusColumnRenderer(RoomsTable, "RoomTable", /* status column index */ 2);
+        
+        // Center Tables text
+        centerTableText(BookingTable);
+        centerTableText(CheckinTable);
+        centerTableText(PendingGuestTable);
+        centerTableText(RoomsTable);
+        centerTableText(TransactionsTable);
+        centerTableText(StaffsTable);
+        centerTableText(LogsTable);
         
         // Load the date and time today
         this.loadDateAndTimeToday();
@@ -43,6 +97,224 @@ public class Main extends javax.swing.JFrame {
         this.LoadTransactions();
         // Set the SearchList default model
         SearchList.setModel(new DefaultListModel<>());
+        // Load The Analytics
+        this.LoadAnalyticsCharts();
+        
+        if (this.isAdmin) {
+            TransactionLabel.setText("All Transactions Today:");
+            StaffFullnameLabel.setText("Full Name: " + this.fullname + " - Admin");
+            StaffIDLabel.setText("ID: " + this.staff_id);
+        } else {
+            TransactionLabel.setText("Your Transactions Today:");
+            StaffFullnameLabel.setText("Full Name: " + this.fullname + " - Staff");
+            StaffIDLabel.setText("ID: " + this.staff_id);
+        }
+     
+    }
+    
+    public void applyStatusColumnRenderer(JTable table, String tableType, int statusColumnIndex) {
+        TableCellRenderer defaultRenderer = table.getDefaultRenderer(Object.class);
+
+        table.getColumnModel().getColumn(statusColumnIndex).setCellRenderer((table1, value, isSelected, hasFocus, row, column) -> {
+            Component comp = defaultRenderer.getTableCellRendererComponent(table1, value, isSelected, hasFocus, row, column);
+
+            if (comp instanceof JLabel) {
+                JLabel label = (JLabel) comp;
+                label.setOpaque(true); // Critical to see background color
+
+                String status = value != null ? value.toString() : "";
+                Color bgColor = Color.WHITE;
+                Color fgColor = Color.BLACK;
+
+                switch (tableType) {
+                    case "BookingTable":
+                        if (status.equalsIgnoreCase("Booked")) {
+                            bgColor = new Color(22, 163, 74);
+                            fgColor = Color.WHITE;
+                        } else if (status.equalsIgnoreCase("Need to checkin")) {
+                            bgColor = new Color(239, 68, 68);
+                            fgColor = Color.WHITE;
+                        }
+                        break;
+
+                    case "CheckinTable":
+                        if (status.equalsIgnoreCase("Active")) {
+                            bgColor = new Color(22, 163, 74);
+                            fgColor = Color.WHITE;
+                        } else if (status.equalsIgnoreCase("Need to checkout")) {
+                            bgColor = new Color(239, 68, 68);
+                            fgColor = Color.WHITE;
+                        }
+                        break;
+
+                    case "RoomTable":
+                        if (status.equalsIgnoreCase("Available")) {
+                            bgColor = new Color(22, 163, 74);
+                            fgColor = Color.WHITE;
+                        } else if (status.equalsIgnoreCase("Occupied")) {
+                            bgColor = new Color(59, 130, 246);
+                            fgColor = Color.WHITE;
+                        }
+                        break;
+                }
+
+                if (isSelected) {
+                    label.setBackground(table1.getSelectionBackground());
+                    label.setForeground(table1.getSelectionForeground());
+                } else {
+                    label.setBackground(bgColor);
+                    label.setForeground(fgColor);
+                }
+
+                return label;
+            }
+
+            return comp;
+        });
+}
+    
+    // Center Tables
+    public void centerTableText(JTable table) {
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+
+        ((DefaultTableCellRenderer) table.getTableHeader().getDefaultRenderer())
+            .setHorizontalAlignment(JLabel.CENTER);
+    }
+    
+    void LoadAnalyticsCharts() {
+        DefaultPieDataset categoryDataset = new DefaultPieDataset();           // For ChartPanelOne
+        DefaultCategoryDataset barDataset = new DefaultCategoryDataset();      // For ChartPanelTwo2
+
+        int bookingCount = 0;
+        int checkinCount = 0;
+        Map<LocalDate, int[]> dailyCounts = new TreeMap<>();
+        Map<String, Integer> categoryCounts = new HashMap<>();
+
+        try {
+            // Fetch transactions and process them
+            ResultSet data = db.LoadTransaction(isAdmin, staff_id, true);
+            LocalDate today = LocalDate.now();
+            LocalDate weekAgo = today.minusDays(6);
+
+            while (data.next()) {
+                String type = data.getString("type");
+                Timestamp ts = data.getTimestamp("date");
+                String category = data.getString("category");
+
+                if (ts == null) continue;
+
+                LocalDate createdDate = ts.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+                // Count category usage
+                if (category != null && !category.isEmpty()) {
+                    categoryCounts.put(category, categoryCounts.getOrDefault(category, 0) + 1);
+                }
+
+                if ("booking".equalsIgnoreCase(type)) bookingCount++;
+                else if ("checkin".equalsIgnoreCase(type)) checkinCount++;
+
+                if (!createdDate.isBefore(weekAgo) && !createdDate.isAfter(today)) {
+                    int[] counts = dailyCounts.getOrDefault(createdDate, new int[]{0, 0});
+                    if ("booking".equalsIgnoreCase(type)) counts[0]++;
+                    else if ("checkin".equalsIgnoreCase(type)) counts[1]++;
+                    dailyCounts.put(createdDate, counts);
+                }
+            }
+
+            // Load room categories to ensure consistent labeling
+            ResultSet categories = db.LoadRoomTypeName();
+            while (categories.next()) {
+                String categoryName = categories.getString("type");
+                if (!categoryCounts.containsKey(categoryName)) {
+                    categoryCounts.put(categoryName, 0);
+                }
+            }
+
+            // Populate pie chart
+            for (Map.Entry<String, Integer> entry : categoryCounts.entrySet()) {
+                categoryDataset.setValue(entry.getKey(), entry.getValue());
+            }
+
+            JFreeChart pieChart = ChartFactory.createPieChart(
+                "Room Category Trends",
+                categoryDataset,
+                true, true, false);
+
+            // Populate bar chart
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd");
+            for (LocalDate date : dailyCounts.keySet()) {
+                int[] counts = dailyCounts.get(date);
+                barDataset.addValue(counts[0], "Bookings", date.format(formatter));
+                barDataset.addValue(counts[1], "Check-ins", date.format(formatter));
+            }
+
+            JFreeChart barChart = ChartFactory.createBarChart(
+                "Bookings and Check-ins (Last 7 Days)",
+                "Date",
+                "Count",
+                barDataset,
+                PlotOrientation.VERTICAL,
+                true, true, false);
+
+            // Apply charts with fixed sizes
+            SwingUtilities.invokeLater(() -> {
+                Dimension pieSize = ChartPanelOne.getSize();
+                Dimension barSize = ChartPanelTwo2.getSize();
+
+                ChartPanel piePanel = new ChartPanel(pieChart, false);
+                piePanel.setPreferredSize(pieSize);
+
+                ChartPanel barPanel = new ChartPanel(barChart, false);
+                barPanel.setPreferredSize(barSize);
+
+                // ChartPanelOne - Pie
+                ChartPanelOne.removeAll();
+                ChartPanelOne.setLayout(new BorderLayout());
+                ChartPanelOne.add(piePanel, BorderLayout.CENTER);
+                ChartPanelOne.revalidate();
+                ChartPanelOne.repaint();
+
+                // ChartPanelTwo2 - Bar
+                ChartPanelTwo2.removeAll();
+                ChartPanelTwo2.setLayout(new BorderLayout());
+                ChartPanelTwo2.add(barPanel, BorderLayout.CENTER);
+                ChartPanelTwo2.revalidate();
+                ChartPanelTwo2.repaint();
+            });
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading analytics data", "Analytics Load Failed", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    private boolean PromptAndCheckPassword() {
+        JPasswordField passwordField = new JPasswordField();
+        int option = JOptionPane.showConfirmDialog(
+            this,
+            passwordField,
+            "Enter your password",
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (option == JOptionPane.OK_OPTION) {
+            String inputPassword = new String(passwordField.getPassword());
+            boolean isCorrect = db.CheckPassword(this.staff_id, inputPassword);
+
+            if (!isCorrect) {
+                JOptionPane.showMessageDialog(this, "Incorrect password.", "Authentication Failed", JOptionPane.ERROR_MESSAGE);
+            }
+
+            return isCorrect;
+        }
+
+        return false;
     }
 
     /**
@@ -74,23 +346,24 @@ public class Main extends javax.swing.JFrame {
         DashboardPanel = new javax.swing.JPanel();
         TopPanel2 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
-        jPanel2 = new javax.swing.JPanel();
-        jPanel3 = new javax.swing.JPanel();
-        jLabel22 = new javax.swing.JLabel();
-        jPanel6 = new javax.swing.JPanel();
-        jLabel24 = new javax.swing.JLabel();
+        jPanel4 = new javax.swing.JPanel();
+        ChartPanelTwo2 = new javax.swing.JPanel();
+        ChartPanelOne = new javax.swing.JPanel();
         DayOfWeek = new javax.swing.JLabel();
         Time = new javax.swing.JLabel();
         Date = new javax.swing.JLabel();
-        jLabel28 = new javax.swing.JLabel();
+        TransactionLabel = new javax.swing.JLabel();
         jScrollPane6 = new javax.swing.JScrollPane();
         TransactionsTable = new javax.swing.JTable();
+        StaffFullnameLabel = new javax.swing.JLabel();
+        StaffIDLabel = new javax.swing.JLabel();
         UserPanel = new javax.swing.JPanel();
         TopPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         TopPanel8 = new javax.swing.JPanel();
-        jButton8 = new javax.swing.JButton();
-        jButton7 = new javax.swing.JButton();
+        AddStaffButton = new javax.swing.JButton();
+        RemoveStaff = new javax.swing.JButton();
+        StaffRefreah = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
         jLabel29 = new javax.swing.JLabel();
         jScrollPane7 = new javax.swing.JScrollPane();
@@ -102,6 +375,10 @@ public class Main extends javax.swing.JFrame {
         TopPanel3 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         TopPanel7 = new javax.swing.JPanel();
+        CheckinBook = new javax.swing.JButton();
+        CancelBook = new javax.swing.JButton();
+        CheckoutButton = new javax.swing.JButton();
+        BookingCheckinRefresh = new javax.swing.JButton();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         BookingsToolBar = new javax.swing.JToolBar();
         jScrollPane4 = new javax.swing.JScrollPane();
@@ -163,11 +440,11 @@ public class Main extends javax.swing.JFrame {
         TopPanel5 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
         TopPanel6 = new javax.swing.JPanel();
-        jButton3 = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
+        AddRoomType = new javax.swing.JButton();
+        RemoveRoomType = new javax.swing.JButton();
+        AddRoom = new javax.swing.JButton();
+        RemoveRoomButton = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
-        jButton5 = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         RoomsTable = new javax.swing.JTable();
 
@@ -180,7 +457,7 @@ public class Main extends javax.swing.JFrame {
 
         jLabel1.setFont(new java.awt.Font("Arial Black", 0, 18)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(249, 250, 251));
-        jLabel1.setText("HOTEL MANAGEMENT SYSTEM");
+        jLabel1.setText("ADC - HOTEL MANAGEMENT SYSTEM");
         TopPanel.add(jLabel1);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -230,7 +507,7 @@ public class Main extends javax.swing.JFrame {
         BookingTab.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         BookingTab.setForeground(new java.awt.Color(3, 7, 18));
         BookingTab.setIcon(new javax.swing.ImageIcon("C:\\Users\\Admin\\Downloads\\icons\\booking.png")); // NOI18N
-        BookingTab.setText("Booking");
+        BookingTab.setText("Booking & Check-in");
         BookingTab.setIconTextGap(6);
         BookingTab.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         BookingTab.addActionListener(new java.awt.event.ActionListener() {
@@ -307,55 +584,37 @@ public class Main extends javax.swing.JFrame {
 
         jLabel3.setFont(new java.awt.Font("Arial Black", 0, 16)); // NOI18N
         jLabel3.setForeground(new java.awt.Color(249, 250, 251));
-        jLabel3.setText("    DASHBOARD");
+        jLabel3.setText("    ANALYTICS");
         TopPanel2.add(jLabel3);
 
         DashboardPanel.add(TopPanel2, java.awt.BorderLayout.PAGE_START);
 
-        jPanel3.setBackground(new java.awt.Color(153, 153, 153));
+        ChartPanelTwo2.setBackground(new java.awt.Color(153, 153, 153));
+        ChartPanelTwo2.setMaximumSize(new java.awt.Dimension(543, 435));
 
-        jLabel22.setFont(new java.awt.Font("Segoe UI", 1, 36)); // NOI18N
-        jLabel22.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel22.setText("Analytics");
-
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addContainerGap(82, Short.MAX_VALUE)
-                .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 385, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(76, 76, 76))
+        javax.swing.GroupLayout ChartPanelTwo2Layout = new javax.swing.GroupLayout(ChartPanelTwo2);
+        ChartPanelTwo2.setLayout(ChartPanelTwo2Layout);
+        ChartPanelTwo2Layout.setHorizontalGroup(
+            ChartPanelTwo2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addContainerGap(108, Short.MAX_VALUE)
-                .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 243, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(84, 84, 84))
+        ChartPanelTwo2Layout.setVerticalGroup(
+            ChartPanelTwo2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 435, Short.MAX_VALUE)
         );
 
-        jPanel6.setBackground(new java.awt.Color(153, 153, 153));
+        ChartPanelOne.setBackground(new java.awt.Color(153, 153, 153));
+        ChartPanelOne.setMaximumSize(new java.awt.Dimension(543, 442));
 
-        jLabel24.setFont(new java.awt.Font("Segoe UI", 1, 36)); // NOI18N
-        jLabel24.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel24.setText("Analytics");
-
-        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
-        jPanel6.setLayout(jPanel6Layout);
-        jPanel6Layout.setHorizontalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
-                .addContainerGap(63, Short.MAX_VALUE)
-                .addComponent(jLabel24, javax.swing.GroupLayout.PREFERRED_SIZE, 419, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(61, 61, 61))
+        javax.swing.GroupLayout ChartPanelOneLayout = new javax.swing.GroupLayout(ChartPanelOne);
+        ChartPanelOne.setLayout(ChartPanelOneLayout);
+        ChartPanelOneLayout.setHorizontalGroup(
+            ChartPanelOneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 847, Short.MAX_VALUE)
         );
-        jPanel6Layout.setVerticalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
-                .addContainerGap(102, Short.MAX_VALUE)
-                .addComponent(jLabel24, javax.swing.GroupLayout.PREFERRED_SIZE, 243, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(97, 97, 97))
+        ChartPanelOneLayout.setVerticalGroup(
+            ChartPanelOneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 442, Short.MAX_VALUE)
         );
 
         DayOfWeek.setFont(new java.awt.Font("Arial Black", 0, 20)); // NOI18N
@@ -371,11 +630,11 @@ public class Main extends javax.swing.JFrame {
         Date.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         Date.setText("September 03, 2025");
 
-        jLabel28.setFont(new java.awt.Font("Arial Black", 0, 18)); // NOI18N
-        jLabel28.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        jLabel28.setText("Transactions Today:");
+        TransactionLabel.setFont(new java.awt.Font("Arial Black", 0, 18)); // NOI18N
+        TransactionLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        TransactionLabel.setText("Your Transactions Today:");
 
-        TransactionsTable.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        TransactionsTable.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         TransactionsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null, null, null, null, null, null, null, null},
@@ -409,55 +668,72 @@ public class Main extends javax.swing.JFrame {
         TransactionsTable.setShowGrid(true);
         jScrollPane6.setViewportView(TransactionsTable);
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addGap(26, 26, 26)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel28, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(Time)
-                                    .addComponent(Date)
-                                    .addComponent(DayOfWeek, javax.swing.GroupLayout.PREFERRED_SIZE, 437, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(0, 332, Short.MAX_VALUE)))
-                        .addGap(716, 716, 716))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jScrollPane6)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(91, 91, 91))
+        StaffFullnameLabel.setFont(new java.awt.Font("Arial Black", 0, 18)); // NOI18N
+        StaffFullnameLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        StaffFullnameLabel.setText("Full Name:");
+
+        StaffIDLabel.setFont(new java.awt.Font("Arial Black", 0, 18)); // NOI18N
+        StaffIDLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        StaffIDLabel.setText("ID:");
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGap(139, 139, 139)
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(Time)
+                            .addComponent(Date)
+                            .addComponent(DayOfWeek, javax.swing.GroupLayout.PREFERRED_SIZE, 437, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 173, Short.MAX_VALUE))
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGap(26, 26, 26)
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(TransactionLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(jPanel4Layout.createSequentialGroup()
+                                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(jScrollPane6, javax.swing.GroupLayout.DEFAULT_SIZE, 788, Short.MAX_VALUE)
+                                    .addComponent(StaffFullnameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(StaffIDLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGap(0, 0, Short.MAX_VALUE)))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(ChartPanelOne, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(ChartPanelTwo2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(618, Short.MAX_VALUE))
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(118, 118, 118)
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGap(0, 126, Short.MAX_VALUE)
+                        .addComponent(ChartPanelOne, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(12, 12, 12)
+                        .addComponent(ChartPanelTwo2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGap(122, 122, 122)
                         .addComponent(DayOfWeek, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(Time, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(Date)
-                        .addGap(88, 88, 88)
-                        .addComponent(jLabel28, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(84, 84, 84)
+                        .addComponent(TransactionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane6))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addContainerGap(75, Short.MAX_VALUE)
-                        .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(StaffFullnameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(StaffIDLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addGap(19, 19, 19))
         );
 
-        DashboardPanel.add(jPanel2, java.awt.BorderLayout.CENTER);
+        DashboardPanel.add(jPanel4, java.awt.BorderLayout.CENTER);
 
         MainPanel.add(DashboardPanel, "DashboardCard");
 
@@ -482,17 +758,38 @@ public class Main extends javax.swing.JFrame {
         TopPanel8.setPreferredSize(new java.awt.Dimension(1009, 40));
         TopPanel8.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
 
-        jButton8.setBackground(new java.awt.Color(59, 130, 246));
-        jButton8.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
-        jButton8.setForeground(new java.awt.Color(3, 7, 18));
-        jButton8.setText("Refresh");
-        TopPanel8.add(jButton8);
+        AddStaffButton.setBackground(new java.awt.Color(22, 163, 74));
+        AddStaffButton.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        AddStaffButton.setForeground(new java.awt.Color(3, 7, 18));
+        AddStaffButton.setText("Add Staff");
+        AddStaffButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                AddStaffButtonActionPerformed(evt);
+            }
+        });
+        TopPanel8.add(AddStaffButton);
 
-        jButton7.setBackground(new java.awt.Color(249, 250, 253));
-        jButton7.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
-        jButton7.setForeground(new java.awt.Color(3, 7, 18));
-        jButton7.setText("Add Staff");
-        TopPanel8.add(jButton7);
+        RemoveStaff.setBackground(new java.awt.Color(239, 68, 68));
+        RemoveStaff.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        RemoveStaff.setForeground(new java.awt.Color(3, 7, 18));
+        RemoveStaff.setText("Remove Staff");
+        RemoveStaff.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                RemoveStaffActionPerformed(evt);
+            }
+        });
+        TopPanel8.add(RemoveStaff);
+
+        StaffRefreah.setBackground(new java.awt.Color(59, 130, 246));
+        StaffRefreah.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        StaffRefreah.setForeground(new java.awt.Color(3, 7, 18));
+        StaffRefreah.setText("Refresh");
+        StaffRefreah.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                StaffRefreahActionPerformed(evt);
+            }
+        });
+        TopPanel8.add(StaffRefreah);
 
         UserPanel.add(TopPanel8, java.awt.BorderLayout.SOUTH);
 
@@ -500,7 +797,7 @@ public class Main extends javax.swing.JFrame {
         jLabel29.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel29.setText("Staffs");
 
-        StaffsTable.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        StaffsTable.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         StaffsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null, null, null, null, null},
@@ -536,23 +833,23 @@ public class Main extends javax.swing.JFrame {
         jLabel30.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel30.setText("Logs");
 
-        LogsTable.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        LogsTable.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         LogsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null}
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null}
             },
             new String [] {
-                "Staff", "In", "Out", "Bookings", "Checkins", "Date"
+                "Staff ID", "In", "Out", "Working Hours", "Date"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.Object.class, java.lang.Object.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Object.class
+                java.lang.Integer.class, java.lang.Object.class, java.lang.Object.class, java.lang.Integer.class, java.lang.Object.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false
+                false, false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -576,12 +873,12 @@ public class Main extends javax.swing.JFrame {
                 .addGap(24, 24, 24)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel29, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 1120, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 990, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel30, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(476, Short.MAX_VALUE))
+                .addContainerGap(687, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -594,7 +891,7 @@ public class Main extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(470, Short.MAX_VALUE))
+                .addContainerGap(515, Short.MAX_VALUE))
         );
 
         UserPanel.add(jPanel1, java.awt.BorderLayout.CENTER);
@@ -612,7 +909,7 @@ public class Main extends javax.swing.JFrame {
 
         jLabel4.setFont(new java.awt.Font("Arial Black", 0, 16)); // NOI18N
         jLabel4.setForeground(new java.awt.Color(249, 250, 251));
-        jLabel4.setText("    BOOKING");
+        jLabel4.setText("    BOOKING & CHECK-IN");
         TopPanel3.add(jLabel4);
 
         BookingPanel.add(TopPanel3, java.awt.BorderLayout.NORTH);
@@ -621,6 +918,51 @@ public class Main extends javax.swing.JFrame {
         TopPanel7.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         TopPanel7.setPreferredSize(new java.awt.Dimension(1009, 40));
         TopPanel7.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
+
+        CheckinBook.setBackground(new java.awt.Color(22, 163, 74));
+        CheckinBook.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        CheckinBook.setForeground(new java.awt.Color(3, 7, 18));
+        CheckinBook.setText("Checkin Book");
+        CheckinBook.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                CheckinBookActionPerformed(evt);
+            }
+        });
+        TopPanel7.add(CheckinBook);
+
+        CancelBook.setBackground(new java.awt.Color(239, 68, 68));
+        CancelBook.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        CancelBook.setForeground(new java.awt.Color(3, 7, 18));
+        CancelBook.setText("Cancel Book");
+        CancelBook.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                CancelBookActionPerformed(evt);
+            }
+        });
+        TopPanel7.add(CancelBook);
+
+        CheckoutButton.setBackground(new java.awt.Color(22, 163, 74));
+        CheckoutButton.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        CheckoutButton.setForeground(new java.awt.Color(3, 7, 18));
+        CheckoutButton.setText("Checkout");
+        CheckoutButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                CheckoutButtonActionPerformed(evt);
+            }
+        });
+        TopPanel7.add(CheckoutButton);
+
+        BookingCheckinRefresh.setBackground(new java.awt.Color(59, 130, 246));
+        BookingCheckinRefresh.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        BookingCheckinRefresh.setForeground(new java.awt.Color(3, 7, 18));
+        BookingCheckinRefresh.setText("Refresh");
+        BookingCheckinRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                BookingCheckinRefreshActionPerformed(evt);
+            }
+        });
+        TopPanel7.add(BookingCheckinRefresh);
+
         BookingPanel.add(TopPanel7, java.awt.BorderLayout.SOUTH);
 
         BookingsToolBar.setRollover(true);
@@ -629,20 +971,20 @@ public class Main extends javax.swing.JFrame {
         BookingTable.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
         BookingTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null}
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "ID", "Guest ID", "Guest", "Checkin", "Checkout", "People", "Room Number", "Time Left", "Status"
+                "ID", "Guest ID", "Guest", "Checkin", "Checkout", "People", "Room Number", "Time Left", "Status", "Total"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Integer.class, java.lang.Integer.class, java.lang.String.class, java.lang.Object.class, java.lang.Object.class, java.lang.Integer.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class
+                java.lang.Integer.class, java.lang.Integer.class, java.lang.String.class, java.lang.Object.class, java.lang.Object.class, java.lang.Integer.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.Double.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false, false, false
+                false, false, false, false, false, false, false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -1058,6 +1400,11 @@ public class Main extends javax.swing.JFrame {
         DeclineButton.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         DeclineButton.setForeground(new java.awt.Color(249, 250, 253));
         DeclineButton.setText("Decline");
+        DeclineButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                DeclineButtonActionPerformed(evt);
+            }
+        });
 
         jLabel20.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
         jLabel20.setText("Pending Guest:");
@@ -1146,11 +1493,11 @@ public class Main extends javax.swing.JFrame {
                         .addComponent(jLabel20)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, GridPanelLayout.createSequentialGroup()
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 1371, Short.MAX_VALUE)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 1411, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(GridPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, GridPanelLayout.createSequentialGroup()
-                                .addGap(0, 1, Short.MAX_VALUE)
+                                .addGap(0, 42, Short.MAX_VALUE)
                                 .addComponent(DeclineButton, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(GridPanelLayout.createSequentialGroup()
                                 .addGroup(GridPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1192,7 +1539,7 @@ public class Main extends javax.swing.JFrame {
                             .addComponent(SearchSubmitButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(ClearSearchButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addComponent(jScrollPane2))
-                .addContainerGap(89, Short.MAX_VALUE))
+                .addContainerGap(134, Short.MAX_VALUE))
         );
 
         GuestPanel.add(GridPanel, java.awt.BorderLayout.CENTER);
@@ -1220,55 +1567,80 @@ public class Main extends javax.swing.JFrame {
         TopPanel6.setPreferredSize(new java.awt.Dimension(1009, 40));
         TopPanel6.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
 
-        jButton3.setBackground(new java.awt.Color(59, 130, 246));
-        jButton3.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
-        jButton3.setForeground(new java.awt.Color(3, 7, 18));
-        jButton3.setText("Occupied");
-        TopPanel6.add(jButton3);
+        AddRoomType.setBackground(new java.awt.Color(22, 163, 74));
+        AddRoomType.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        AddRoomType.setForeground(new java.awt.Color(3, 7, 18));
+        AddRoomType.setText("Add Room Type");
+        AddRoomType.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                AddRoomTypeActionPerformed(evt);
+            }
+        });
+        TopPanel6.add(AddRoomType);
 
-        jButton4.setBackground(new java.awt.Color(22, 163, 74));
-        jButton4.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
-        jButton4.setForeground(new java.awt.Color(3, 7, 18));
-        jButton4.setText("Available");
-        TopPanel6.add(jButton4);
+        RemoveRoomType.setBackground(new java.awt.Color(239, 68, 68));
+        RemoveRoomType.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        RemoveRoomType.setForeground(new java.awt.Color(3, 7, 18));
+        RemoveRoomType.setText("Remove Room Type");
+        RemoveRoomType.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                RemoveRoomTypeActionPerformed(evt);
+            }
+        });
+        TopPanel6.add(RemoveRoomType);
+
+        AddRoom.setBackground(new java.awt.Color(22, 163, 74));
+        AddRoom.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        AddRoom.setForeground(new java.awt.Color(3, 7, 18));
+        AddRoom.setText("Add Room");
+        AddRoom.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                AddRoomActionPerformed(evt);
+            }
+        });
+        TopPanel6.add(AddRoom);
+
+        RemoveRoomButton.setBackground(new java.awt.Color(239, 68, 68));
+        RemoveRoomButton.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        RemoveRoomButton.setForeground(new java.awt.Color(3, 7, 18));
+        RemoveRoomButton.setText("Remove Room");
+        RemoveRoomButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                RemoveRoomButtonActionPerformed(evt);
+            }
+        });
+        TopPanel6.add(RemoveRoomButton);
 
         jButton6.setBackground(new java.awt.Color(59, 130, 246));
         jButton6.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
         jButton6.setForeground(new java.awt.Color(3, 7, 18));
         jButton6.setText("Refresh");
+        jButton6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton6ActionPerformed(evt);
+            }
+        });
         TopPanel6.add(jButton6);
-
-        jButton2.setBackground(new java.awt.Color(239, 68, 68));
-        jButton2.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
-        jButton2.setForeground(new java.awt.Color(3, 7, 18));
-        jButton2.setText("Remove");
-        TopPanel6.add(jButton2);
-
-        jButton5.setBackground(new java.awt.Color(249, 250, 253));
-        jButton5.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
-        jButton5.setForeground(new java.awt.Color(3, 7, 18));
-        jButton5.setText("Add");
-        TopPanel6.add(jButton5);
 
         RoomPanel.add(TopPanel6, java.awt.BorderLayout.SOUTH);
 
         RoomsTable.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
         RoomsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null},
+                {null, null, null},
+                {null, null, null},
+                {null, null, null}
             },
             new String [] {
-                "Room Number", "Type", "Description", "Status"
+                "Room Number", "Type", "Status"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+                java.lang.String.class, java.lang.String.class, java.lang.String.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, false
+                false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -1356,7 +1728,6 @@ public class Main extends javax.swing.JFrame {
                 Object[] row = {
                     data.getString("room_number"),
                     data.getString("room_type"),
-                    data.getString("description"),
                     data.getString("status"),
                 };
                 tableModel.addRow(row);
@@ -1390,8 +1761,9 @@ public class Main extends javax.swing.JFrame {
                     data.getString("middle_name"),
                     data.getString("gender"),
                     data.getString("email_address"),
-                    data.getString("phone_number")
-                        
+                    data.getString("phone_number"),
+                    data.getString("username"),
+                    data.getString("password")
                 };
                 tableModel.addRow(row);
             }
@@ -1399,6 +1771,38 @@ public class Main extends javax.swing.JFrame {
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error on setting staff for staffs table.", "Staffs Load Failed", JOptionPane.ERROR_MESSAGE);
+        }
+        
+    }
+    
+    // Showing the staffs
+    void LoadLogs() {
+        
+        // Create table model
+        DefaultTableModel tableModel = (DefaultTableModel) LogsTable.getModel();
+        tableModel.setRowCount(0);
+        
+        // Execute Database method for that
+        ResultSet data = db.LoadLogs();
+        
+        // Setting the data for rooms table
+        try {
+            
+            while (data.next()) {
+                Object[] row = {
+                    data.getInt("staff_id"),
+                    data.getTime("time_in"),
+                    data.getTime("time_out"),
+                    data.getInt("working_hours"),
+                    data.getDate("log_date")
+                        
+                };
+                tableModel.addRow(row);
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error on setting log for logs table.", "Logs Load Failed", JOptionPane.ERROR_MESSAGE);
         }
         
     }
@@ -1411,7 +1815,7 @@ public class Main extends javax.swing.JFrame {
         tableModel.setRowCount(0);
         
         // Execute Database method for that
-        ResultSet data = db.LoadTransaction();
+        ResultSet data = db.LoadTransaction(isAdmin, staff_id, false);
         
         // Setting the data for rooms table
         try {
@@ -1463,6 +1867,7 @@ public class Main extends javax.swing.JFrame {
                 int numberOfGuests = data.getInt("number_of_guests");
                 String roomNumber = data.getString("room_number");
                 String status = data.getString("status");
+                double total = data.getDouble("total");
 
                 long now = System.currentTimeMillis();
 
@@ -1471,20 +1876,25 @@ public class Main extends javax.swing.JFrame {
                     long hoursUntilCheckin = millisUntilCheckin / (1000 * 60 * 60);
                     long daysUntilCheckin = hoursUntilCheckin / 24;
 
-                    if (millisUntilCheckin <= 0 && !status.equals("Need to checkin")) {
-                        db.ChangeCheckinStatus(checkInId, "Need to checkin");
-                        status = "Need to checkin";
+                    // Check if guest is arriving today (0 days), with remaining hours or already past
+                    if ((daysUntilCheckin == 0 && hoursUntilCheckin <= 12) || millisUntilCheckin <= 0) {
+                        if (!status.equals("Need to checkin")) {
+                            db.ChangeCheckinStatus(checkInId, "Need to checkin");
+                            status = "Need to checkin";
+                        }
                     }
 
                     Object[] row = {
                         checkInId,
+                        guestId,
                         fullName,
                         checkin,
                         checkout,
                         numberOfGuests,
                         roomNumber,
                         daysUntilCheckin + " days / " + hoursUntilCheckin + " hours",
-                        status
+                        status,
+                        total
                     };
                     BookingTableModel.addRow(row);
 
@@ -1499,6 +1909,7 @@ public class Main extends javax.swing.JFrame {
 
                     Object[] row = {
                         checkInId,
+                        guestId,
                         fullName,
                         checkin,
                         checkout,
@@ -1514,7 +1925,7 @@ public class Main extends javax.swing.JFrame {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error on loading bookings and checkins.", "Booking or Checkin Table Load Failed", JOptionPane.ERROR_MESSAGE);
         }
-    }
+}
 
     
     // Convert raw birthday data into Date object
@@ -1601,14 +2012,28 @@ public class Main extends javax.swing.JFrame {
     }
     
     private void UserTabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UserTabActionPerformed
-        ShowCard("User");
-        this.LoadStaffs();
+        if (isAdmin) {
+            
+            // Prompt for password
+            if (!PromptAndCheckPassword()) {
+                return; // Stop if password incorrect or cancelled
+            }
+            
+            ShowCard("User");
+            this.LoadStaffs();
+            this.LoadLogs();
+        } else {
+            JOptionPane.showMessageDialog(this, "Make sure to login as admin to access this features.", "Only Admin can access this features", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_UserTabActionPerformed
 
     private void DashboardTabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DashboardTabActionPerformed
         ShowCard("Dashboard");
         this.loadDateAndTimeToday();
         this.LoadTransactions();
+        this.LoadAnalyticsCharts();
+        StaffFullnameLabel.setText("Full Name: " + this.fullname);
+        StaffIDLabel.setText("ID: " + this.staff_id);
     }//GEN-LAST:event_DashboardTabActionPerformed
 
     private void BookingTabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BookingTabActionPerformed
@@ -1631,7 +2056,27 @@ public class Main extends javax.swing.JFrame {
     }//GEN-LAST:event_RoomTabActionPerformed
 
     private void LogoutTabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LogoutTabActionPerformed
-        // TODO add your handling code here:
+        int response = JOptionPane.showConfirmDialog(
+            this,                             
+            "Are you sure you want to Logout?",
+            "Confirm Logout",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (response == JOptionPane.YES_OPTION) {
+            // User clicked YES
+            
+            StaffOut = LocalTime.now();
+            db.SaveLog(this.staff_id, this.StaffIn, StaffOut);
+            
+            Login login = new Login();
+            login.setVisible(true);
+            this.dispose();
+        } else if (response == JOptionPane.NO_OPTION) {
+            // User clicked NO
+           
+        }
     }//GEN-LAST:event_LogoutTabActionPerformed
 
     private void FirstNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_FirstNameTextFieldActionPerformed
@@ -1756,8 +2201,9 @@ public class Main extends javax.swing.JFrame {
         Object selectedGuest = this.getSelectedGuestFromTable();
         
         if (selectedGuest != null) {
-            CheckinAndBooking checkin = new CheckinAndBooking(false, Integer.parseInt(selectedGuest.toString()), this.getSelectedGuestFromTable(true).toString());
+            CheckinAndBooking checkin = new CheckinAndBooking(false, Integer.parseInt(selectedGuest.toString()), this.getSelectedGuestFromTable(true).toString(), this.staff_id);
             checkin.setVisible(true);
+            this.LoadPendingGuest();
         }
            
     }//GEN-LAST:event_CheckinButtonActionPerformed
@@ -1770,17 +2216,39 @@ public class Main extends javax.swing.JFrame {
         Object selectedGuest = this.getSelectedGuestFromTable();
         
         if (selectedGuest != null) {
-            CheckinAndBooking booking = new CheckinAndBooking(true, Integer.parseInt(selectedGuest.toString()), this.getSelectedGuestFromTable(true).toString());
+            CheckinAndBooking booking = new CheckinAndBooking(true, Integer.parseInt(selectedGuest.toString()), this.getSelectedGuestFromTable(true).toString(), this.staff_id);
             booking.setVisible(true);
+            this.LoadPendingGuest();
         }
     }//GEN-LAST:event_BookingButtonActionPerformed
 
     private void SearchCheckinButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SearchCheckinButtonActionPerformed
-        // TODO add your handling code here:
+        String selectedValue = SearchList.getSelectedValue();
+        
+        if (selectedValue != null) {
+            
+            String[] parts = selectedValue.split("\\|");
+            String id = parts[0].trim();          
+            String fullname = parts[1].trim();
+            
+            CheckinAndBooking checkin = new CheckinAndBooking(false, Integer.parseInt(id), fullname, this.staff_id);
+            checkin.setVisible(true);
+        }
+        
     }//GEN-LAST:event_SearchCheckinButtonActionPerformed
 
     private void SearchBookingButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SearchBookingButtonActionPerformed
-        // TODO add your handling code here:
+        String selectedValue = SearchList.getSelectedValue();
+        
+        if (selectedValue != null) {
+            
+            String[] parts = selectedValue.split("\\|");
+            String id = parts[0].trim();          
+            String fullname = parts[1].trim();
+            
+            CheckinAndBooking booking = new CheckinAndBooking(true, Integer.parseInt(id), fullname, this.staff_id);
+            booking.setVisible(true);
+        }
     }//GEN-LAST:event_SearchBookingButtonActionPerformed
 
     private void ClearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ClearButtonActionPerformed
@@ -1805,21 +2273,340 @@ public class Main extends javax.swing.JFrame {
         model.clear();
     }//GEN-LAST:event_ClearSearchButtonActionPerformed
 
+    private void DeclineButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DeclineButtonActionPerformed
+        int selectedGuest = Integer.parseInt(this.getSelectedGuestFromTable().toString());
+        if (db.DeclineGuest(selectedGuest)) {
+            JOptionPane.showMessageDialog(this, "Decline guests successful It's now deleted to the record.", "Guest has been decline", JOptionPane.INFORMATION_MESSAGE);
+            this.LoadPendingGuest();
+        }
+    }//GEN-LAST:event_DeclineButtonActionPerformed
+
+    private void RemoveRoomButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RemoveRoomButtonActionPerformed
+        if (!isAdmin) {
+            JOptionPane.showMessageDialog(this, "Make sure to login as admin to access this feature.", "Only Admin Can Access", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Prompt for password
+        if (!PromptAndCheckPassword()) {
+            return; // Stop if password is incorrect or cancelled
+        }
+
+        int selectedRow = RoomsTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a room from the table first.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Get room ID from first column
+        Object roomIdObj = RoomsTable.getValueAt(selectedRow, 0);
+        if (roomIdObj == null) {
+            JOptionPane.showMessageDialog(this, "Selected room ID is invalid.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String roomId = roomIdObj.toString();
+
+        int confirm = JOptionPane.showConfirmDialog(
+            this,
+            "Are you sure you want to remove room ID: " + roomId + "?",
+            "Confirm Deletion",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE
+        );
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            boolean removed = db.RemoveRoom(roomId);
+            if (removed) {
+                JOptionPane.showMessageDialog(this, "Room removed successfully.");
+                // Optional: refresh the table here if needed
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to remove room.", "Remove Failed", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        
+        this.LoadRooms();
+    }//GEN-LAST:event_RemoveRoomButtonActionPerformed
+
+    private void CheckinBookActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CheckinBookActionPerformed
+        int selectedRow = BookingTable.getSelectedRow();
+
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a booking from the table.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String status = BookingTable.getValueAt(selectedRow, 8).toString(); // 9th column (index 8)
+        if (!status.equalsIgnoreCase("Need to checkin")) {
+            JOptionPane.showMessageDialog(this, "The selected booking is not eligible for check-in.", "Invalid Status", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Get total amount and ask for confirmation
+        String totalAmountStr = BookingTable.getValueAt(selectedRow, 9).toString(); // 10th column (index 9)
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Guest needs to pay a total of ₱" + totalAmountStr + ".\nProceed with check-in and confirm payment?",
+            "Confirm Payment",
+            JOptionPane.YES_NO_OPTION);
+
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        // Proceed with check-in
+        int checkInId = Integer.parseInt(BookingTable.getValueAt(selectedRow, 0).toString()); // 1st column (index 0)
+        boolean success = db.CheckinBook(checkInId);
+
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Guest successfully checked in.", "Check-in Complete", JOptionPane.INFORMATION_MESSAGE);
+            // Optionally refresh the booking table here
+        }
+        
+         this.LoadBookingsAndCheckins();
+    }//GEN-LAST:event_CheckinBookActionPerformed
+
+    private void AddRoomTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AddRoomTypeActionPerformed
+        if (isAdmin) {
+            AddRoomType addRoomType = new AddRoomType(this.staff_id);
+            addRoomType.setVisible(true);
+            this.LoadRooms();
+        } else {
+            JOptionPane.showMessageDialog(this, "Make sure to login as admin to access this features.", "Only Admin can access this features", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_AddRoomTypeActionPerformed
+
+    private void AddRoomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AddRoomActionPerformed
+        if (isAdmin) {
+            AddRoom addRoom = new AddRoom(this.staff_id);
+            addRoom.setVisible(true);
+            this.LoadRooms();
+        } else {
+            JOptionPane.showMessageDialog(this, "Make sure to login as admin to access this features.", "Only Admin can access this features", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_AddRoomActionPerformed
+
+    private void RemoveRoomTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RemoveRoomTypeActionPerformed
+         if (!isAdmin) {
+            JOptionPane.showMessageDialog(this, "Make sure to login as admin to access this feature.", "Only Admin Can Access", JOptionPane.ERROR_MESSAGE);
+            return;
+            }
+
+            // Prompt for password
+            if (!PromptAndCheckPassword()) {
+                return; // Stop if password incorrect or cancelled
+            }
+
+            // Load room types from DB
+            ResultSet rs = db.LoadRoomTypeName();
+            if (rs == null) {
+                return; // Already handled with an error message in db method
+            }
+
+            JComboBox<String> roomTypeComboBox = new JComboBox<>();
+
+            try {
+                while (rs.next()) {
+                    roomTypeComboBox.addItem(rs.getString("type"));
+                }
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Failed to load room types.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            int result = JOptionPane.showConfirmDialog(
+                this,
+                roomTypeComboBox,
+                "Select Room Type to Remove",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+            );
+
+            if (result == JOptionPane.OK_OPTION) {
+                String selectedType = (String) roomTypeComboBox.getSelectedItem();
+
+                if (selectedType == null || selectedType.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "No room type selected.", "Input Error", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Are you sure you want to remove room type: " + selectedType + "?",
+                    "Confirm Deletion",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+                );
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    boolean removed = db.RemoveRoomType(selectedType);
+                    if (removed) {
+                        JOptionPane.showMessageDialog(this, "Room type removed successfully.");
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Failed to remove room type.", "Remove Failed", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+            
+           this.LoadRooms();
+    }//GEN-LAST:event_RemoveRoomTypeActionPerformed
+
+    private void CancelBookActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CancelBookActionPerformed
+        int selectedRow = BookingTable.getSelectedRow();
+
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a booking to cancel.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int checkInId = Integer.parseInt(BookingTable.getValueAt(selectedRow, 0).toString()); // 1st column (index 0)
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Are you sure you want to cancel this booking?",
+            "Confirm Cancel Booking",
+            JOptionPane.YES_NO_OPTION);
+
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        boolean success = db.CheckoutBook(checkInId);
+
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Booking successfully cancelled.", "Cancel Success", JOptionPane.INFORMATION_MESSAGE);
+            // Optionally refresh BookingTable here
+        }
+        
+         this.LoadBookingsAndCheckins();
+    }//GEN-LAST:event_CancelBookActionPerformed
+
+    private void CheckoutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CheckoutButtonActionPerformed
+       int selectedRow = CheckinTable.getSelectedRow();
+
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a check-in record to checkout.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String status = CheckinTable.getValueAt(selectedRow, 8).toString(); // Assuming 9th column is status (index 8)
+
+        if (!status.equalsIgnoreCase("Need to checkout")) {
+            JOptionPane.showMessageDialog(this, "Only records with status 'Need to checkout' can be checked out.", "Invalid Status", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int checkInId = Integer.parseInt(CheckinTable.getValueAt(selectedRow, 0).toString()); // 1st column (index 0)
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Are you sure you want to checkout this guest?",
+            "Confirm Checkout",
+            JOptionPane.YES_NO_OPTION);
+
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        boolean success = db.CheckoutBook(checkInId);
+
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Checkout successful.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            // Optionally refresh CheckinTable here
+        }
+        
+         this.LoadBookingsAndCheckins();
+    }//GEN-LAST:event_CheckoutButtonActionPerformed
+
+    private void RemoveStaffActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RemoveStaffActionPerformed
+         if (isAdmin) {
+            int selectedRow = StaffsTable.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(this, "Please select a staff to remove.", "No Staff Selected", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (!PromptAndCheckPassword()) {
+                return;
+            }
+
+            // Get the staff ID from the first column
+            Object idObject = StaffsTable.getValueAt(selectedRow, 0);
+            if (idObject == null) {
+                JOptionPane.showMessageDialog(this, "Invalid staff ID.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            int id;
+            try {
+                id = Integer.parseInt(idObject.toString());
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Staff ID is not a valid number.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this staff?", "Confirm Removal", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                
+                if (db.RemoveStaff(id)) { 
+                    JOptionPane.showMessageDialog(this, "Staff removed successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                }
+                
+                this.LoadStaffs();
+            }
+
+        } else {
+            JOptionPane.showMessageDialog(this, "Make sure to login as admin to access this feature.", "Only Admin Can Access", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_RemoveStaffActionPerformed
+
+    private void AddStaffButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AddStaffButtonActionPerformed
+        if (isAdmin) {
+            AddStaff addStaff = new AddStaff(this.staff_id);
+            addStaff.setVisible(true);
+            this.LoadStaffs();
+            this.LoadLogs();
+        } else {
+            JOptionPane.showMessageDialog(this, "Make sure to login as admin to access this features.", "Only Admin can access this features", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_AddStaffButtonActionPerformed
+
+    private void BookingCheckinRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BookingCheckinRefreshActionPerformed
+        this.LoadBookingsAndCheckins();
+    }//GEN-LAST:event_BookingCheckinRefreshActionPerformed
+
+    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+        this.LoadRooms();
+    }//GEN-LAST:event_jButton6ActionPerformed
+
+    private void StaffRefreahActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_StaffRefreahActionPerformed
+        this.LoadStaffs();
+        this.LoadLogs();
+    }//GEN-LAST:event_StaffRefreahActionPerformed
+
     /**
      * @param args the command line arguments
      */
     
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton AddRoom;
+    private javax.swing.JButton AddRoomType;
+    private javax.swing.JButton AddStaffButton;
     private javax.swing.JTextField AgeTextField;
     private javax.swing.JButton BookingButton;
+    private javax.swing.JButton BookingCheckinRefresh;
     private javax.swing.JPanel BookingPanel;
     private javax.swing.JButton BookingTab;
     private javax.swing.JTable BookingTable;
     private javax.swing.JToolBar BookingsToolBar;
+    private javax.swing.JButton CancelBook;
+    private javax.swing.JPanel ChartPanelOne;
+    private javax.swing.JPanel ChartPanelTwo2;
+    private javax.swing.JButton CheckinBook;
     private javax.swing.JButton CheckinButton;
     private javax.swing.JTable CheckinTable;
     private javax.swing.JToolBar CheckinsToolBar;
+    private javax.swing.JButton CheckoutButton;
     private javax.swing.JButton ClearButton;
     private javax.swing.JButton ClearSearchButton;
     private javax.swing.JPanel DashboardPanel;
@@ -1846,6 +2633,9 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JTable PendingGuestTable;
     private javax.swing.JTextField PhoneTextField;
     private javax.swing.JButton RefreshButton;
+    private javax.swing.JButton RemoveRoomButton;
+    private javax.swing.JButton RemoveRoomType;
+    private javax.swing.JButton RemoveStaff;
     private javax.swing.JPanel RoomPanel;
     private javax.swing.JButton RoomTab;
     private javax.swing.JTable RoomsTable;
@@ -1853,6 +2643,9 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JButton SearchSubmitButton;
     private javax.swing.JTextField SearchTextField;
     private javax.swing.JPanel SidePanel;
+    private javax.swing.JLabel StaffFullnameLabel;
+    private javax.swing.JLabel StaffIDLabel;
+    private javax.swing.JButton StaffRefreah;
     private javax.swing.JTable StaffsTable;
     private javax.swing.JButton SubmitButton;
     private javax.swing.JButton SubmitButton2;
@@ -1867,6 +2660,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JPanel TopPanel6;
     private javax.swing.JPanel TopPanel7;
     private javax.swing.JPanel TopPanel8;
+    private javax.swing.JLabel TransactionLabel;
     private javax.swing.JTable TransactionsTable;
     private javax.swing.JPanel UserPanel;
     private javax.swing.JButton UserTab;
@@ -1876,13 +2670,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.Box.Filler filler3;
     private javax.swing.Box.Filler filler4;
     private javax.swing.Box.Filler filler6;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
-    private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
-    private javax.swing.JButton jButton7;
-    private javax.swing.JButton jButton8;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1897,9 +2685,6 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
-    private javax.swing.JLabel jLabel22;
-    private javax.swing.JLabel jLabel24;
-    private javax.swing.JLabel jLabel28;
     private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel30;
@@ -1910,9 +2695,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel6;
+    private javax.swing.JPanel jPanel4;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;

@@ -23,6 +23,9 @@ public class CheckinAndBooking extends javax.swing.JFrame {
     boolean isForBooking;
     Database db = new Database(this);
     int guest;
+    int staff;
+    double price;
+    double downpayment;
 
     /**
      * Creates new form CheckinAndBooking
@@ -123,9 +126,10 @@ public class CheckinAndBooking extends javax.swing.JFrame {
     }
     
     // CONSTRUCTOR
-   public CheckinAndBooking(boolean isForBooking, int guest, String fullname) {
+   public CheckinAndBooking(boolean isForBooking, int guest, String fullname, int staff) {
         this.isForBooking = isForBooking;
         this.guest = guest;
+        this.staff = staff;
         initComponents();
 
         PeopleSpinner.setModel(new SpinnerNumberModel(1, 1, 10, 1));
@@ -461,9 +465,9 @@ public class CheckinAndBooking extends javax.swing.JFrame {
             checkinDateTime,
             RoomComboBox.getSelectedItem().toString(),
             checkoutDateTime,
-            0,
-            0,
-            1,
+            this.downpayment,
+            this.price,
+            this.staff,
             new Date() // transaction date (you can also use combineDateAndTime here if needed)
         );
         
@@ -533,8 +537,8 @@ public class CheckinAndBooking extends javax.swing.JFrame {
         DurationLabel.setText("Duration: " + selectedItem);
         
         String[] splitItem = selectedItem.split(":");
-        double price = Double.parseDouble(splitItem[1].trim());
-        double downpayment = 0;
+        price = Double.parseDouble(splitItem[1].trim());
+        downpayment = 0;
         
         if (isForBooking) {
             downpayment = price * 0.20;
@@ -542,7 +546,7 @@ public class CheckinAndBooking extends javax.swing.JFrame {
         }
         
         DownpaymentLabel.setText("Downpayment: " + downpayment);
-        PriceLabel.setText("Price: " + price);
+        PriceLabel.setText("Price: ₱" + price);
         
         this.updateCheckoutDateTimeFromDuration();
         
