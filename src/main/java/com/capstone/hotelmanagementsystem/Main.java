@@ -10,6 +10,9 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -39,13 +42,13 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
+import org.mindrot.jbcrypt.BCrypt;
 
 /**
  *
  * @author Admin
  */
 public class Main extends javax.swing.JFrame {
-    Database db = null;
     int staff_id;
     boolean isAdmin = false;
     String fullname = "";
@@ -62,6 +65,10 @@ public class Main extends javax.swing.JFrame {
         
         initComponents();
         
+        Database.parent = this;
+        Connection conn = Database.getConnection();
+        CheckinStatusUpdater.start(conn);
+        
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
@@ -72,7 +79,6 @@ public class Main extends javax.swing.JFrame {
         });
         
         this.setExtendedState(JFrame.MAXIMIZED_BOTH); // Fullscreen when It's start
-        this.db = new Database(this); // Connect to the database
         this.staff_id = staff_id;
         this.isAdmin = isAdmin;
         this.fullname = fullanme;
@@ -197,7 +203,7 @@ public class Main extends javax.swing.JFrame {
 
         try {
             // Fetch transactions and process them
-            ResultSet data = db.LoadTransaction(isAdmin, staff_id, true);
+            ResultSet data = Database.LoadTransaction(isAdmin, staff_id, true);
             LocalDate today = LocalDate.now();
             LocalDate weekAgo = today.minusDays(6);
 
@@ -227,7 +233,7 @@ public class Main extends javax.swing.JFrame {
             }
 
             // Load room categories to ensure consistent labeling
-            ResultSet categories = db.LoadRoomTypeName();
+            ResultSet categories = Database.LoadRoomTypeName();
             while (categories.next()) {
                 String categoryName = categories.getString("type");
                 if (!categoryCounts.containsKey(categoryName)) {
@@ -305,7 +311,7 @@ public class Main extends javax.swing.JFrame {
 
         if (option == JOptionPane.OK_OPTION) {
             String inputPassword = new String(passwordField.getPassword());
-            boolean isCorrect = db.CheckPassword(this.staff_id, inputPassword);
+            boolean isCorrect = Database.CheckPassword(this.staff_id, inputPassword);
 
             if (!isCorrect) {
                 JOptionPane.showMessageDialog(this, "Incorrect password.", "Authentication Failed", JOptionPane.ERROR_MESSAGE);
@@ -371,6 +377,10 @@ public class Main extends javax.swing.JFrame {
         jLabel30 = new javax.swing.JLabel();
         jScrollPane8 = new javax.swing.JScrollPane();
         LogsTable = new javax.swing.JTable();
+        jPanel3 = new javax.swing.JPanel();
+        jLabel22 = new javax.swing.JLabel();
+        StaffForgotPassword = new javax.swing.JLabel();
+        ChangePassword = new javax.swing.JLabel();
         BookingPanel = new javax.swing.JPanel();
         TopPanel3 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
@@ -445,8 +455,11 @@ public class Main extends javax.swing.JFrame {
         AddRoom = new javax.swing.JButton();
         RemoveRoomButton = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
+        jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         RoomsTable = new javax.swing.JTable();
+        typeComboBox = new javax.swing.JComboBox<>();
+        statusComboBox = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new java.awt.GridBagLayout());
@@ -566,6 +579,8 @@ public class Main extends javax.swing.JFrame {
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.ipadx = 55;
+        gridBagConstraints.ipady = 3;
         gridBagConstraints.weighty = 1.1;
         getContentPane().add(SidePanel, gridBagConstraints);
 
@@ -610,7 +625,7 @@ public class Main extends javax.swing.JFrame {
         ChartPanelOne.setLayout(ChartPanelOneLayout);
         ChartPanelOneLayout.setHorizontalGroup(
             ChartPanelOneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 847, Short.MAX_VALUE)
+            .addGap(0, 800, Short.MAX_VALUE)
         );
         ChartPanelOneLayout.setVerticalGroup(
             ChartPanelOneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -688,7 +703,7 @@ public class Main extends javax.swing.JFrame {
                             .addComponent(Time)
                             .addComponent(Date)
                             .addComponent(DayOfWeek, javax.swing.GroupLayout.PREFERRED_SIZE, 437, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 173, Short.MAX_VALUE))
+                        .addGap(0, 258, Short.MAX_VALUE))
                     .addGroup(jPanel4Layout.createSequentialGroup()
                         .addGap(26, 26, 26)
                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -703,14 +718,14 @@ public class Main extends javax.swing.JFrame {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(ChartPanelOne, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(ChartPanelTwo2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(618, Short.MAX_VALUE))
+                .addContainerGap(703, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(0, 126, Short.MAX_VALUE)
+                        .addGap(0, 171, Short.MAX_VALUE)
                         .addComponent(ChartPanelOne, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(12, 12, 12)
                         .addComponent(ChartPanelTwo2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -800,20 +815,20 @@ public class Main extends javax.swing.JFrame {
         StaffsTable.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         StaffsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null}
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "ID", "Last Name", "First Name", "Middle Name", "Gender", "Email", "Phone", "Username", "Password"
+                "ID", "Last Name", "First Name", "Middle Name", "Gender", "Email", "Phone", "Username"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+                java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false, false, false
+                false, false, false, false, false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -865,6 +880,60 @@ public class Main extends javax.swing.JFrame {
         LogsTable.setShowGrid(true);
         jScrollPane8.setViewportView(LogsTable);
 
+        jPanel3.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+
+        jLabel22.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        jLabel22.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        jLabel22.setText("Manage Account");
+
+        StaffForgotPassword.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        StaffForgotPassword.setForeground(new java.awt.Color(59, 130, 246));
+        StaffForgotPassword.setText("Staff Forgot Password");
+        StaffForgotPassword.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        StaffForgotPassword.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                StaffForgotPasswordMouseClicked(evt);
+            }
+        });
+
+        ChangePassword.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        ChangePassword.setForeground(new java.awt.Color(59, 130, 246));
+        ChangePassword.setText("Change your password");
+        ChangePassword.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        ChangePassword.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                ChangePasswordMouseClicked(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGap(15, 15, 15)
+                        .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 490, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGap(29, 29, 29)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(ChangePassword, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(StaffForgotPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(15, Short.MAX_VALUE))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addComponent(jLabel22)
+                .addGap(18, 18, 18)
+                .addComponent(ChangePassword)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(StaffForgotPassword)
+                .addContainerGap(122, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -872,13 +941,16 @@ public class Main extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(24, 24, 24)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel29, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 990, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel30, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(687, Short.MAX_VALUE))
+                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel29, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 990, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel30, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(810, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -891,7 +963,9 @@ public class Main extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(515, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(314, Short.MAX_VALUE))
         );
 
         UserPanel.add(jPanel1, java.awt.BorderLayout.CENTER);
@@ -1493,11 +1567,11 @@ public class Main extends javax.swing.JFrame {
                         .addComponent(jLabel20)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, GridPanelLayout.createSequentialGroup()
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 1411, Short.MAX_VALUE)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 1449, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(GridPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, GridPanelLayout.createSequentialGroup()
-                                .addGap(0, 42, Short.MAX_VALUE)
+                                .addGap(0, 127, Short.MAX_VALUE)
                                 .addComponent(DeclineButton, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(GridPanelLayout.createSequentialGroup()
                                 .addGroup(GridPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1539,7 +1613,7 @@ public class Main extends javax.swing.JFrame {
                             .addComponent(SearchSubmitButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(ClearSearchButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addComponent(jScrollPane2))
-                .addContainerGap(134, Short.MAX_VALUE))
+                .addContainerGap(179, Short.MAX_VALUE))
         );
 
         GuestPanel.add(GridPanel, java.awt.BorderLayout.CENTER);
@@ -1553,12 +1627,23 @@ public class Main extends javax.swing.JFrame {
         TopPanel5.setBackground(new java.awt.Color(49, 46, 129));
         TopPanel5.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         TopPanel5.setPreferredSize(new java.awt.Dimension(1009, 40));
-        TopPanel5.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
 
         jLabel6.setFont(new java.awt.Font("Arial Black", 0, 16)); // NOI18N
         jLabel6.setForeground(new java.awt.Color(249, 250, 251));
         jLabel6.setText("    ROOM");
-        TopPanel5.add(jLabel6);
+
+        javax.swing.GroupLayout TopPanel5Layout = new javax.swing.GroupLayout(TopPanel5);
+        TopPanel5.setLayout(TopPanel5Layout);
+        TopPanel5Layout.setHorizontalGroup(
+            TopPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jLabel6)
+        );
+        TopPanel5Layout.setVerticalGroup(
+            TopPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(TopPanel5Layout.createSequentialGroup()
+                .addGap(7, 7, 7)
+                .addComponent(jLabel6))
+        );
 
         RoomPanel.add(TopPanel5, java.awt.BorderLayout.PAGE_START);
 
@@ -1657,7 +1742,35 @@ public class Main extends javax.swing.JFrame {
         RoomsTable.setShowGrid(true);
         jScrollPane1.setViewportView(RoomsTable);
 
-        RoomPanel.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+        statusComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All", "Available", "Occupied", "Maintenance" }));
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(28, 28, 28)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(statusComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 193, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 1548, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(842, Short.MAX_VALUE))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(52, 52, 52)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(statusComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(36, 36, 36)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 449, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(480, Short.MAX_VALUE))
+        );
+
+        RoomPanel.add(jPanel2, java.awt.BorderLayout.CENTER);
 
         MainPanel.add(RoomPanel, "RoomCard");
 
@@ -1686,7 +1799,7 @@ public class Main extends javax.swing.JFrame {
         tableModel.setRowCount(0);
         
         // Execute Database method for that
-        ResultSet data = db.LoadGuests("pending");
+        ResultSet data = Database.LoadGuests("pending");
         
         // Setting the data for pending guest table
         try {
@@ -1719,7 +1832,7 @@ public class Main extends javax.swing.JFrame {
         tableModel.setRowCount(0);
         
         // Execute Database method for that
-        ResultSet data = db.LoadRooms("All");
+        ResultSet data = Database.LoadRooms("All");
         
         // Setting the data for rooms table
         try {
@@ -1748,7 +1861,7 @@ public class Main extends javax.swing.JFrame {
         tableModel.setRowCount(0);
         
         // Execute Database method for that
-        ResultSet data = db.LoadStaffs();
+        ResultSet data = Database.LoadStaffs();
         
         // Setting the data for rooms table
         try {
@@ -1763,7 +1876,6 @@ public class Main extends javax.swing.JFrame {
                     data.getString("email_address"),
                     data.getString("phone_number"),
                     data.getString("username"),
-                    data.getString("password")
                 };
                 tableModel.addRow(row);
             }
@@ -1783,7 +1895,7 @@ public class Main extends javax.swing.JFrame {
         tableModel.setRowCount(0);
         
         // Execute Database method for that
-        ResultSet data = db.LoadLogs();
+        ResultSet data = Database.LoadLogs();
         
         // Setting the data for rooms table
         try {
@@ -1815,7 +1927,7 @@ public class Main extends javax.swing.JFrame {
         tableModel.setRowCount(0);
         
         // Execute Database method for that
-        ResultSet data = db.LoadTransaction(isAdmin, staff_id, false);
+        ResultSet data = Database.LoadTransaction(isAdmin, staff_id, false);
         
         // Setting the data for rooms table
         try {
@@ -1855,7 +1967,7 @@ public class Main extends javax.swing.JFrame {
         CheckinTableModel.setRowCount(0);
 
         // Execute Database method for that
-        ResultSet data = db.LoadBookingsAndCheckin();
+        ResultSet data = Database.LoadBookingsAndCheckin();
 
         try {
             while (data.next()) {
@@ -1879,7 +1991,7 @@ public class Main extends javax.swing.JFrame {
                     // Check if guest is arriving today (0 days), with remaining hours or already past
                     if ((daysUntilCheckin == 0 && hoursUntilCheckin <= 12) || millisUntilCheckin <= 0) {
                         if (!status.equals("Need to checkin")) {
-                            db.ChangeCheckinStatus(checkInId, "Need to checkin");
+                            Database.ChangeCheckinStatus(checkInId, "Need to checkin");
                             status = "Need to checkin";
                         }
                     }
@@ -1903,7 +2015,7 @@ public class Main extends javax.swing.JFrame {
                     long hoursRemaining = millisRemaining / (1000 * 60 * 60);
 
                     if (millisRemaining <= 0 && !status.equals("Need to checkout")) {
-                        db.ChangeCheckinStatus(checkInId, "Need to checkout");
+                        Database.ChangeCheckinStatus(checkInId, "Need to checkout");
                         status = "Need to checkout";
                     }
 
@@ -2051,10 +2163,67 @@ public class Main extends javax.swing.JFrame {
     }//GEN-LAST:event_GuestTabActionPerformed
 
     private void RoomTabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RoomTabActionPerformed
-        ShowCard("Room");
+        
+       ShowCard("Room");
         this.LoadRooms();
+
+        // ✅ Clear existing items to prevent duplicates
+        typeComboBox.removeAllItems();
+
+        // ✅ Add default option
+        typeComboBox.addItem("All");
+
+        try {
+            ResultSet rs = Database.LoadRoomTypeName();
+            while (rs.next()) {
+                String roomType = rs.getString("type"); // adjust if needed
+                typeComboBox.addItem(roomType);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // ✅ Remove existing listeners to avoid stacking them
+        for (ActionListener al : typeComboBox.getActionListeners()) {
+            typeComboBox.removeActionListener(al);
+        }
+        for (ActionListener al : statusComboBox.getActionListeners()) {
+            statusComboBox.removeActionListener(al);
+        }
+
+        // ✅ Add a single listener again
+        ActionListener filterListener = e -> applyRoomFilter();
+        typeComboBox.addActionListener(filterListener);
+        statusComboBox.addActionListener(filterListener);
+        
     }//GEN-LAST:event_RoomTabActionPerformed
 
+    void applyRoomFilter() {
+        String selectedType = (String) typeComboBox.getSelectedItem();
+        String selectedStatus = (String) statusComboBox.getSelectedItem();
+
+        // Load filtered rooms
+        ResultSet rs = Database.LoadFilteredRooms(
+            "All".equals(selectedType) ? null : selectedType,
+            "All".equals(selectedStatus) ? null : selectedStatus
+        );
+
+        DefaultTableModel model = (DefaultTableModel) RoomsTable.getModel();
+        model.setRowCount(0); // Clear table
+
+        try {
+            while (rs.next()) {
+                model.addRow(new Object[] {
+                    rs.getString("room_number"),
+                    rs.getString("room_type"),
+                    rs.getString("status"),
+                });
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
     private void LogoutTabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LogoutTabActionPerformed
         int response = JOptionPane.showConfirmDialog(
             this,                             
@@ -2068,7 +2237,7 @@ public class Main extends javax.swing.JFrame {
             // User clicked YES
             
             StaffOut = LocalTime.now();
-            db.SaveLog(this.staff_id, this.StaffIn, StaffOut);
+            Database.SaveLog(this.staff_id, this.StaffIn, StaffOut);
             
             Login login = new Login();
             login.setVisible(true);
@@ -2115,13 +2284,25 @@ public class Main extends javax.swing.JFrame {
            isFormValid = false;
        }
        
-       if (EmailTextField.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Double check the credentials make sure to fill-up all required field.", "The Email Address is required.", JOptionPane.ERROR_MESSAGE);
+       if (PhoneTextField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Contact Number is required.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        } else if (!PhoneTextField.getText().matches("\\d+")) {
+            JOptionPane.showMessageDialog(this, "Contact Number must be digits.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        } else if (!(PhoneTextField.getText().length() == 11)) {
+            JOptionPane.showMessageDialog(this, "Contact Number must be 11 digits.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        } else if (!PhoneTextField.getText().startsWith("09")) {
+            JOptionPane.showMessageDialog(this, "Contact Number must start with 09.", "Validation Error", JOptionPane.ERROR_MESSAGE);
             isFormValid = false;
         }
-       
-       if (PhoneTextField.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Double check the credentials make sure to fill-up all required field.", "The Phone Number is required.", JOptionPane.ERROR_MESSAGE);
+
+        if (EmailTextField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Email Address is required.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        } else if (!EmailTextField.getText().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            JOptionPane.showMessageDialog(this, "Email Address is invalid.", "Validation Error", JOptionPane.ERROR_MESSAGE);
             isFormValid = false;
         }
        
@@ -2146,7 +2327,7 @@ public class Main extends javax.swing.JFrame {
             );
 
             // Execute Databse method for that
-            boolean addGuest = db.AddGuest(guest);
+            boolean addGuest = Database.AddGuest(guest);
 
             if (addGuest) {
                 JOptionPane.showMessageDialog(this, "Added Guest " + guest.last_name + " " + guest.first_name + " as pending guest.", "Guest Added Success", JOptionPane.INFORMATION_MESSAGE);
@@ -2164,7 +2345,7 @@ public class Main extends javax.swing.JFrame {
         } else {
             try {
                 // Call the search method
-                ResultSet result = db.SearchGuest(SearchTextField.getText());
+                ResultSet result = Database.SearchGuest(SearchTextField.getText());
 
                 // Clear the current list
                 DefaultListModel<String> model = (DefaultListModel<String>) SearchList.getModel();
@@ -2275,7 +2456,7 @@ public class Main extends javax.swing.JFrame {
 
     private void DeclineButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DeclineButtonActionPerformed
         int selectedGuest = Integer.parseInt(this.getSelectedGuestFromTable().toString());
-        if (db.DeclineGuest(selectedGuest)) {
+        if (Database.DeclineGuest(selectedGuest)) {
             JOptionPane.showMessageDialog(this, "Decline guests successful It's now deleted to the record.", "Guest has been decline", JOptionPane.INFORMATION_MESSAGE);
             this.LoadPendingGuest();
         }
@@ -2316,7 +2497,7 @@ public class Main extends javax.swing.JFrame {
         );
 
         if (confirm == JOptionPane.YES_OPTION) {
-            boolean removed = db.RemoveRoom(roomId);
+            boolean removed = Database.RemoveRoom(roomId);
             if (removed) {
                 JOptionPane.showMessageDialog(this, "Room removed successfully.");
                 // Optional: refresh the table here if needed
@@ -2355,7 +2536,7 @@ public class Main extends javax.swing.JFrame {
 
         // Proceed with check-in
         int checkInId = Integer.parseInt(BookingTable.getValueAt(selectedRow, 0).toString()); // 1st column (index 0)
-        boolean success = db.CheckinBook(checkInId);
+        boolean success = Database.CheckinBook(checkInId);
 
         if (success) {
             JOptionPane.showMessageDialog(this, "Guest successfully checked in.", "Check-in Complete", JOptionPane.INFORMATION_MESSAGE);
@@ -2397,7 +2578,7 @@ public class Main extends javax.swing.JFrame {
             }
 
             // Load room types from DB
-            ResultSet rs = db.LoadRoomTypeName();
+            ResultSet rs = Database.LoadRoomTypeName();
             if (rs == null) {
                 return; // Already handled with an error message in db method
             }
@@ -2440,7 +2621,7 @@ public class Main extends javax.swing.JFrame {
                 );
 
                 if (confirm == JOptionPane.YES_OPTION) {
-                    boolean removed = db.RemoveRoomType(selectedType);
+                    boolean removed = Database.RemoveRoomType(selectedType);
                     if (removed) {
                         JOptionPane.showMessageDialog(this, "Room type removed successfully.");
                     } else {
@@ -2471,7 +2652,7 @@ public class Main extends javax.swing.JFrame {
             return;
         }
 
-        boolean success = db.CheckoutBook(checkInId);
+        boolean success = Database.CheckoutBook(checkInId);
 
         if (success) {
             JOptionPane.showMessageDialog(this, "Booking successfully cancelled.", "Cancel Success", JOptionPane.INFORMATION_MESSAGE);
@@ -2507,7 +2688,7 @@ public class Main extends javax.swing.JFrame {
             return;
         }
 
-        boolean success = db.CheckoutBook(checkInId);
+        boolean success = Database.CheckoutBook(checkInId);
 
         if (success) {
             JOptionPane.showMessageDialog(this, "Checkout successful.", "Success", JOptionPane.INFORMATION_MESSAGE);
@@ -2547,7 +2728,7 @@ public class Main extends javax.swing.JFrame {
             int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this staff?", "Confirm Removal", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 
-                if (db.RemoveStaff(id)) { 
+                if (Database.RemoveStaff(id)) { 
                     JOptionPane.showMessageDialog(this, "Staff removed successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
                 }
                 
@@ -2583,6 +2764,124 @@ public class Main extends javax.swing.JFrame {
         this.LoadLogs();
     }//GEN-LAST:event_StaffRefreahActionPerformed
 
+    private void ChangePasswordMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_ChangePasswordMouseClicked
+
+        JPasswordField currentField = new JPasswordField();
+        JPasswordField newField = new JPasswordField();
+        JPasswordField confirmField = new JPasswordField();
+
+        Object[] fields = {
+            "Current Password:", currentField,
+            "New Password:", newField,
+            "Confirm New Password:", confirmField
+        };
+
+        int option = JOptionPane.showConfirmDialog(this, fields, "Change Password", JOptionPane.OK_CANCEL_OPTION);
+        if (option != JOptionPane.OK_OPTION) return;
+
+        String currentPassword = new String(currentField.getPassword());
+        String newPassword = new String(newField.getPassword());
+        String confirmPassword = new String(confirmField.getPassword());
+
+        if (currentPassword.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "All fields are required.");
+            return;
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            JOptionPane.showMessageDialog(this, "New passwords do not match.");
+            return;
+        }
+
+        try  {
+            Connection conn = Database.getConnection();
+            PreparedStatement ps = conn.prepareStatement("SELECT password FROM staffs WHERE id = ?");
+            ps.setInt(1, staff_id);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                String storedHashed = rs.getString("password");
+
+                if (!BCrypt.checkpw(currentPassword, storedHashed)) {
+                    JOptionPane.showMessageDialog(this, "Current password is incorrect.");
+                    return;
+                }
+
+                // Hash and update new password
+                String hashedNewPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+                PreparedStatement updatePs = conn.prepareStatement("UPDATE staffs SET password = ? WHERE id = ?");
+                updatePs.setString(1, hashedNewPassword);
+                updatePs.setInt(2, staff_id);
+
+                int updated = updatePs.executeUpdate();
+                if (updated > 0) {
+                    JOptionPane.showMessageDialog(this, "Password changed successfully.");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to update password.");
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage());
+        }
+    }//GEN-LAST:event_ChangePasswordMouseClicked
+
+    private void StaffForgotPasswordMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_StaffForgotPasswordMouseClicked
+        int selectedRow = StaffsTable.getSelectedRow();
+
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a staff member first.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Assuming the ID is in column 0
+        String staffIdStr = StaffsTable.getValueAt(selectedRow, 0).toString();
+        int staffId;
+
+        try {
+            staffId = Integer.parseInt(staffIdStr);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid staff ID.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Prompt for new temporary password
+        JPasswordField passwordField = new JPasswordField();
+        JPasswordField confirmPasswordField = new JPasswordField();
+
+        Object[] message = {
+            "Enter New Temporary Password:", passwordField,
+            "Confirm Password:", confirmPasswordField
+        };
+
+        int option = JOptionPane.showConfirmDialog(this, message, "Set Temporary Password", JOptionPane.OK_CANCEL_OPTION);
+
+        if (option == JOptionPane.OK_OPTION) {
+            String newPassword = new String(passwordField.getPassword());
+            String confirmPassword = new String(confirmPasswordField.getPassword());
+
+            if (newPassword.isEmpty() || confirmPassword.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Password fields cannot be empty.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (!newPassword.equals(confirmPassword)) {
+                JOptionPane.showMessageDialog(this, "Passwords do not match.", "Mismatch", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Save temp password using your provided method
+            try {
+                Database.setTemporaryPassword(staffId, newPassword); // Optionally hash the password here
+                JOptionPane.showMessageDialog(this, "Temporary password saved successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Failed to set temporary password: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_StaffForgotPasswordMouseClicked
+
     /**
      * @param args the command line arguments
      */
@@ -2600,6 +2899,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JTable BookingTable;
     private javax.swing.JToolBar BookingsToolBar;
     private javax.swing.JButton CancelBook;
+    private javax.swing.JLabel ChangePassword;
     private javax.swing.JPanel ChartPanelOne;
     private javax.swing.JPanel ChartPanelTwo2;
     private javax.swing.JButton CheckinBook;
@@ -2643,6 +2943,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JButton SearchSubmitButton;
     private javax.swing.JTextField SearchTextField;
     private javax.swing.JPanel SidePanel;
+    private javax.swing.JLabel StaffForgotPassword;
     private javax.swing.JLabel StaffFullnameLabel;
     private javax.swing.JLabel StaffIDLabel;
     private javax.swing.JButton StaffRefreah;
@@ -2685,6 +2986,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
+    private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel30;
@@ -2695,6 +2997,8 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
@@ -2709,5 +3013,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JSeparator jSeparator4;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JComboBox<String> statusComboBox;
+    private javax.swing.JComboBox<String> typeComboBox;
     // End of variables declaration//GEN-END:variables
 }

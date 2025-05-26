@@ -14,8 +14,7 @@ import javax.swing.JPasswordField;
  * @author Admin
  */
 public class AddRoom extends javax.swing.JFrame {
-    
-    Database db = new Database(this);
+   
     int staff_id;
 
  
@@ -23,13 +22,16 @@ public class AddRoom extends javax.swing.JFrame {
    public AddRoom(int staff_id) {
        this.staff_id = staff_id;
       initComponents();
+      
+      Database.parent = this;
+      
       loadRoomTypes(); // Load room type names from DB
       
     }
 
    
    private void loadRoomTypes() {
-        ResultSet rs = db.LoadRoomTypeName();
+        ResultSet rs = Database.LoadRoomTypeName();
         try {
             while (rs != null && rs.next()) {
                 String type = rs.getString("type");
@@ -53,7 +55,7 @@ public class AddRoom extends javax.swing.JFrame {
 
         if (option == JOptionPane.OK_OPTION) {
             String inputPassword = new String(passwordField.getPassword());
-            boolean isCorrect = db.CheckPassword(this.staff_id, inputPassword);
+            boolean isCorrect = Database.CheckPassword(this.staff_id, inputPassword);
 
             if (!isCorrect) {
                 JOptionPane.showMessageDialog(this, "Incorrect password.", "Authentication Failed", JOptionPane.ERROR_MESSAGE);
@@ -88,7 +90,7 @@ public class AddRoom extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setAlwaysOnTop(true);
-        setLocation(new java.awt.Point(600, 250));
+        setLocation(new java.awt.Point(0, 0));
         setResizable(false);
         setType(java.awt.Window.Type.POPUP);
 
@@ -186,7 +188,7 @@ public class AddRoom extends javax.swing.JFrame {
 
 
                 // Call database method
-                boolean success = db.AddRoom(roomNumber, selectedType);
+                boolean success = Database.AddRoom(roomNumber, selectedType);
                 if (success) {
                     JOptionPane.showMessageDialog(this, "Room added successfully.");
                     this.dispose(); // Close the form

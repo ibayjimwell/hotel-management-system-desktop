@@ -10,6 +10,8 @@ package com.capstone.hotelmanagementsystem;
  */
 import com.capstone.hotelmanagementsystem.objects.GuestInfo;
 import com.capstone.hotelmanagementsystem.objects.TransactionInfo;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -20,8 +22,12 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import org.mindrot.jbcrypt.BCrypt;
 
 /**
  *
@@ -33,37 +39,33 @@ public class Database {
     
     // Connection global variable
     // This variables is can access everywhere in this class 
-    Connection con;
-    Statement statement;
-    JFrame parent;
+    static Connection con = null;
+    static JFrame parent;
     
-    public Database (JFrame parent) {
+    public Database(JFrame parent) {
         this.parent = parent;
-        // try catch to catch the error and the program is not terminate if erro's happend
-        try {
-            
-            // Connection info that's need of the postgresql
-            // host:                                   port, database 
-            String host = System.getenv("DB_HOST_HMS");
-            
-            // Database username
-            String user = System.getenv("DB_USER_HMS");
-            
-            // Database password
-            String password = System.getenv("DB_PASSWORD_HMS");           
-            
-            // Connect to the database
-            con = DriverManager.getConnection(host, user, password);
-            
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(parent, "Error connecting to the database.", "Database Connection", JOptionPane.ERROR_MESSAGE);
-            System.exit(0);
+        if (this.con == null) {
+            try {
+                String host = System.getenv("DB_HOST_HMS");
+                String user = System.getenv("DB_USER_HMS");
+                String password = System.getenv("DB_PASSWORD_HMS");
+                
+                con = DriverManager.getConnection(host, user, password);
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(parent, "Error connecting to the database.", "Database Connection", JOptionPane.ERROR_MESSAGE);
+                System.exit(0);
+            }
         }
     }
     
+    // Get the connection
+    public static Connection getConnection() {
+        return con;
+    }
+    
     // Add guest
-    public boolean AddGuest(GuestInfo info) {
+    public static boolean AddGuest(GuestInfo info) {
         try {
             
             String query = "INSERT INTO public.guests(first_name, middle_name, last_name, gender, birthday, age, phone_number, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
@@ -93,7 +95,7 @@ public class Database {
     }
     
     // Load guests
-    public ResultSet LoadGuests(String status) {
+    public static ResultSet LoadGuests(String status) {
         try {
             
             String query = "SELECT * FROM public.guests WHERE status = ?";
@@ -115,7 +117,7 @@ public class Database {
     }
     
     // Load rooms
-    public ResultSet LoadRooms(String status) {
+    public static ResultSet LoadRooms(String status) {
         try {
             
             String query = null;
@@ -139,7 +141,7 @@ public class Database {
     }
     
     // Load available room for checkin and booking
-    public ResultSet LoadRooms(boolean checkinAndBooking, String type) {
+    public static ResultSet LoadRooms(boolean checkinAndBooking, String type) {
         try {
             
             String query = "SELECT room_number FROM public.rooms WHERE room_type = ? AND status IN (?, ?)";
@@ -163,7 +165,7 @@ public class Database {
     }
     
     // Checkin guest
-    public boolean CheckinGuest(TransactionInfo info, String status) {
+    public static boolean CheckinGuest(TransactionInfo info, String status) {
         try {
             String query = "INSERT INTO public.check_ins(room_number, guest_id, check_in_date, check_out_date, status, number_of_guests, type, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement ps = con.prepareStatement(query);
@@ -203,7 +205,7 @@ public class Database {
 }
     
     // Save transaction
-    public boolean SaveTransaction(TransactionInfo info) {
+    public static boolean SaveTransaction(TransactionInfo info) {
         try {
             String query = "INSERT INTO public.transactions(type, guest, people, category, duration, checkin, room, checkout, downpayment, total, staff, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement ps = con.prepareStatement(query);
@@ -231,7 +233,7 @@ public class Database {
         }
 }
     // Load Transactions
-    public ResultSet LoadTransaction(boolean isAdmin, int staff, boolean isForAnalytics) {
+    public static ResultSet LoadTransaction(boolean isAdmin, int staff, boolean isForAnalytics) {
         try {
             String query;
             PreparedStatement ps;
@@ -287,13 +289,13 @@ public class Database {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(parent, "Something went wrong in loading transactions", "Transactions load failed", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Something went wrong in loading transactions", "Transactions load failed", JOptionPane.ERROR_MESSAGE);
             return null;
         }
-    }
+}
     
     // Load staffs
-    public ResultSet LoadStaffs() {
+    public static ResultSet LoadStaffs() {
         try {
             
             String query = "SELECT * FROM public.staffs WHERE admin = false";
@@ -312,7 +314,7 @@ public class Database {
     }
     
     // Load staffs
-    public ResultSet SearchGuest(Object search) {
+    public static ResultSet SearchGuest(Object search) {
         try {
             
             String query = "SELECT * FROM public.guests WHERE " +
@@ -343,7 +345,7 @@ public class Database {
     }
     
     // Load room types name 
-    public ResultSet LoadRoomTypeName() {
+    public static ResultSet LoadRoomTypeName() {
         try {
             
             String query = "SELECT type FROM public.room_types";
@@ -362,7 +364,7 @@ public class Database {
     }
     
     // Load room prices 
-    public ResultSet LoadRoomPrice(String type) {
+    public static ResultSet LoadRoomPrice(String type) {
         try {
             
             String query = "SELECT * FROM public.room_types WHERE type = ?";
@@ -384,12 +386,12 @@ public class Database {
     }
     
     // Load Bookings and Checkins
-    public ResultSet LoadBookingsAndCheckin() {
+    public static ResultSet LoadBookingsAndCheckin() {
         try {
             
             String query = "SELECT c.*, g.last_name, g.first_name, g.middle_name " +
                "FROM public.check_ins c " +
-               "JOIN public.guests g ON c.guest_id = g.guest_id";
+               "JOIN public.guests g ON c.guest_id = g.guest_id ORDER BY status";
             // Prepare the query
             PreparedStatement ps = con.prepareStatement(query);
 
@@ -405,7 +407,7 @@ public class Database {
     }
     
     // Load Bookings and Checkins
-    public boolean ChangeCheckinStatus(int id, String newStatus) {
+    public static boolean ChangeCheckinStatus(int id, String newStatus) {
         try {
             
             String query = "UPDATE public.check_ins SET status = ? WHERE check_in_id = ?";
@@ -428,7 +430,7 @@ public class Database {
     }
     
     // Decline guest
-    public boolean DeclineGuest(int guest_id) {
+    public static boolean DeclineGuest(int guest_id) {
         try {
             
             String query = "DELETE FROM public.guests WHERE guest_id = ?";
@@ -450,7 +452,7 @@ public class Database {
     }
     
    // Login Staff
-    public ResultSet LoginStaff(String username, String password) {
+    public static ResultSet LoginStaff(String username, String password) {
         try {
             
             String query = "SELECT id, admin, last_name, first_name, middle_name FROM public.staffs WHERE username = ? AND password = ?";
@@ -469,7 +471,7 @@ public class Database {
     }
     
     // Saving logs
-    public boolean SaveLog(int staffId, LocalTime timeIn, LocalTime timeOut) {
+    public static boolean SaveLog(int staffId, LocalTime timeIn, LocalTime timeOut) {
         try {
             String query = "INSERT INTO public.logs(staff_id, time_in, time_out, working_hours, log_date) " +
                            "VALUES (?, ?, ?, ?, ?)";
@@ -495,7 +497,7 @@ public class Database {
     }
     
     // Load logs
-    public ResultSet LoadLogs() {
+    public static ResultSet LoadLogs() {
         try {
             String query = "SELECT * FROM public.logs ORDER BY log_date DESC";
             PreparedStatement ps = con.prepareStatement(query);
@@ -510,7 +512,7 @@ public class Database {
     }
     
     // Checkin Book
-    public boolean CheckinBook(int check_in_id) {
+    public static boolean CheckinBook(int check_in_id) {
         try {
             // Start transaction
             con.setAutoCommit(false);
@@ -565,7 +567,7 @@ public class Database {
         }
     }
     
-    public boolean CheckoutBook(int check_in_id) {
+    public static boolean CheckoutBook(int check_in_id) {
         try {
             // Start transaction
             con.setAutoCommit(false);
@@ -620,7 +622,7 @@ public class Database {
         }
     }
     
-    public boolean AddRoomType(String type, double hr3_price, double hr6_price, double hr10_price, double hr12_price, double hr24_price) {
+    public static boolean AddRoomType(String type, double hr3_price, double hr6_price, double hr10_price, double hr12_price, double hr24_price) {
         try {
             String query = "INSERT INTO public.room_types(type, hr3_price, hr6_price, hr10_price, hr12_price, hr24_price) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -641,7 +643,7 @@ public class Database {
         }
     }
     
-    public boolean RemoveRoomType(String type) {
+    public static boolean RemoveRoomType(String type) {
         try {
             String query = "DELETE FROM public.room_types WHERE type = ?";
 
@@ -657,7 +659,7 @@ public class Database {
         }
     }
     
-    public boolean AddRoom(String roomNumber, String roomType) {
+    public static boolean AddRoom(String roomNumber, String roomType) {
         try {
             String query = "INSERT INTO public.rooms(room_number, room_type, status) VALUES (?, ?, ?)";
 
@@ -675,7 +677,7 @@ public class Database {
         }
     }
     
-   public boolean RemoveRoom(String room_number) {
+   public static boolean RemoveRoom(String room_number) {
         try {
             String query = "DELETE FROM public.rooms WHERE room_number = ?";
 
@@ -691,14 +693,14 @@ public class Database {
         }
     }
    
-   public boolean AddStaff(String firstName, String middleName, String lastName, String gender,
-                        String email, String phone, boolean isAdmin, String username, String password) {
+   public static int AddStaff(String firstName, String middleName, String lastName, String gender,
+                           String email, String phone, boolean isAdmin, String username) {
         try {
             String query = "INSERT INTO public.staffs(" +
-                           "first_name, middle_name, last_name, gender, email_address, phone_number, admin, username, password" +
-                           ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                           "first_name, middle_name, last_name, gender, email_address, phone_number, admin, username" +
+                           ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-            PreparedStatement ps = con.prepareStatement(query);
+            PreparedStatement ps = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, firstName);
             ps.setString(2, middleName);
             ps.setString(3, lastName);
@@ -707,18 +709,25 @@ public class Database {
             ps.setString(6, phone);
             ps.setBoolean(7, isAdmin);
             ps.setString(8, username);
-            ps.setString(9, password); // Consider hashing passwords before storing them
 
-            return ps.executeUpdate() > 0;
+            int affectedRows = ps.executeUpdate();
+
+            if (affectedRows > 0) {
+                ResultSet rs = ps.getGeneratedKeys();
+                if (rs.next()) {
+                    return rs.getInt(1); // return staff_id
+                }
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(parent, "Something went wrong while adding the staff.", "Add Staff Failed", JOptionPane.ERROR_MESSAGE);
-            return false;
         }
+
+        return -1; // return -1 if insert fails
     }
    
-   public boolean RemoveStaff(int id) {
+   public static boolean RemoveStaff(int id) {
         try {
             String query = "DELETE FROM public.staffs WHERE id = ?";
 
@@ -734,26 +743,178 @@ public class Database {
         }
    }
    
-   public boolean CheckPassword(int staff_id, String password) {
+   public static boolean CheckPassword(int staff_id, String password) {
+    try {
+        String query = "SELECT password FROM public.staffs WHERE id = ?";
+        PreparedStatement ps = con.prepareStatement(query);
+        ps.setInt(1, staff_id);
+
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            String storedHashedPassword = rs.getString("password");
+
+            // Check using BCrypt
+            return BCrypt.checkpw(password, storedHashedPassword);
+        }
+
+        return false;
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(parent, "Failed to verify password.", "Password Check Failed", JOptionPane.ERROR_MESSAGE);
+        return false;
+    }
+}
+   
+   public static ResultSet LoadFilteredRooms(String type, String status) {
+    String sql = "SELECT room_id, room_number, room_type, status, image " +
+                 "FROM rooms " +
+                 "WHERE (? IS NULL OR room_type = ?) AND (? IS NULL OR status = ?)";
+
+    try {
+        PreparedStatement ps = getConnection().prepareStatement(sql);
+        ps.setString(1, type);
+        ps.setString(2, type);
+        ps.setString(3, status);
+        ps.setString(4, status);
+        return ps.executeQuery();
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return null;
+    }
+}
+   
+   public static void setTemporaryPassword(int staffId, String plainTempPassword) {
+
+    try {
+        PreparedStatement ps = con.prepareStatement(
+            "INSERT INTO temp_password (staff_id, password) VALUES (?, ?)"
+        );
+        ps.setInt(1, staffId);
+        ps.setString(2, plainTempPassword);
+        ps.executeUpdate();
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+   
+   public static boolean validateTemporaryPassword(int staffId, String enteredPassword) {
+
+    try {
+        PreparedStatement ps = con.prepareStatement(
+            "SELECT password FROM temp_password WHERE staff_id = ?"
+        );
+        ps.setInt(1, staffId);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            String storedHashed = rs.getString("password");
+            return storedHashed.equals(enteredPassword);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return false;
+}
+   
+   public static void deleteTemporaryPassword(int staffId) {
+        try  {
+            PreparedStatement ps = con.prepareStatement(
+                "DELETE FROM temp_password WHERE staff_id = ?"
+            );
+            ps.setInt(1, staffId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+   
+   public static String hashPassword(String plainPassword) {
         try {
-            String query = "SELECT password FROM public.staffs WHERE id = ?";
-            PreparedStatement ps = con.prepareStatement(query);
-            ps.setInt(1, staff_id);
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                String storedPassword = rs.getString("password");
-                return storedPassword.equals(password);
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hashedBytes = md.digest(plainPassword.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashedBytes) {
+                sb.append(String.format("%02x", b));
             }
+            return sb.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+   
+   public static void updateStaffPassword(int staffId, String hashedPassword) {
+    try  {
+        PreparedStatement ps = con.prepareStatement(
+            "UPDATE staffs SET password = ? WHERE id = ?"
+        );
+        ps.setString(1, hashedPassword);
+        ps.setInt(2, staffId);
+        ps.executeUpdate();
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+   
+   public static ResultSet LoadAvailableRooms(java.util.Date checkin, java.util.Date checkout, String category) {
+        String sql = "SELECT * FROM rooms WHERE room_type = ? AND room_number NOT IN (" +
+                     "SELECT room_number FROM transactions WHERE " +
+                     "((checkin <= ? AND checkout > ?) OR " +
+                     "(checkin < ? AND checkout >= ?) OR " +
+                     "(checkin >= ? AND checkout <= ?))" +
+                     ")";
 
-            return false;
+        try {
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setString(1, category);
 
+            // Convert java.util.Date to java.sql.Timestamp
+            Timestamp checkinTimestamp = new Timestamp(checkin.getTime());
+            Timestamp checkoutTimestamp = new Timestamp(checkout.getTime());
+
+            pst.setTimestamp(2, checkoutTimestamp);
+            pst.setTimestamp(3, checkinTimestamp);
+
+            pst.setTimestamp(4, checkoutTimestamp);
+            pst.setTimestamp(5, checkinTimestamp);
+
+            pst.setTimestamp(6, checkinTimestamp);
+            pst.setTimestamp(7, checkoutTimestamp);
+
+            return pst.executeQuery();
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(parent, "Failed to verify password.", "Password Check Failed", JOptionPane.ERROR_MESSAGE);
-            return false;
+            return null;
         }
+    }
+  public static List<java.util.Date> LoadUnavailableCheckinDates(String roomNumber) {
+        List<java.util.Date> unavailableDates = new ArrayList<>();
+        String sql = "SELECT checkin, checkout FROM transactions WHERE room = ?";
+
+        try {
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setString(1, roomNumber);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                java.util.Date start = new java.util.Date(rs.getTimestamp("checkin").getTime());
+                java.util.Date end = new java.util.Date(rs.getTimestamp("checkout").getTime());
+
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(start);
+
+                while (!cal.getTime().after(end)) {
+                    unavailableDates.add(cal.getTime());
+                    cal.add(Calendar.DATE, 1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return unavailableDates;
     }
     
 }

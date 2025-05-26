@@ -4,23 +4,25 @@
  */
 package com.capstone.hotelmanagementsystem;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import javax.swing.JOptionPane;
+import javax.swing.JPasswordField;
+import org.mindrot.jbcrypt.BCrypt;
 
 /**
  *
  * @author Admin
  */
 public class Login extends javax.swing.JFrame {
-    
-    Database db = new Database(this);
-
  
     // CONSTRUCTOR
    public Login() {
        
       initComponents();
+      
+      Database.parent = this;
       
     }
 
@@ -43,9 +45,9 @@ public class Login extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         PasswordField = new javax.swing.JPasswordField();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setAlwaysOnTop(true);
-        setLocation(new java.awt.Point(600, 250));
+        setLocation(new java.awt.Point(0, 0));
         setResizable(false);
         setType(java.awt.Window.Type.POPUP);
 
@@ -124,31 +126,100 @@ public class Login extends javax.swing.JFrame {
 
     private void LoginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginButtonActionPerformed
         String username = UsernameTextField.getText().trim();
-        String password = PasswordField.getText().trim();
+        String password = new String(PasswordField.getPassword());
 
-        ResultSet result = db.LoginStaff(username, password);
+        if (username.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter both username and password.");
+            return;
+        }
 
         try {
-            if (result != null && result.next()) {
-                int staffId = result.getInt("id");
-                boolean isAdmin = result.getBoolean("admin");
+            
+            Connection conn = Database.getConnection();
+            
+            // 1. Get staff by username
+            PreparedStatement stmt = conn.prepareStatement("SELECT * FROM staffs WHERE username = ?");
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
 
-                // Build fullname
-                String lastName = result.getString("last_name");
-                String firstName = result.getString("first_name");
-                String middleName = result.getString("middle_name");
-                String fullName = String.format("%s %s %s", firstName, middleName, lastName);
+            if (rs.next()) {
+                int staffId = rs.getInt("id");
+                String storedHashedPassword = rs.getString("password");
+                String fullname = rs.getString("first_name") + " " + rs.getString("middle_name") + " " + rs.getString("last_name");
+                boolean admin = rs.getBoolean("admin");
 
-                // Proceed to main window
-                Main main = new Main(staffId, isAdmin, fullName);
-                main.setVisible(true);
-                this.dispose(); // Close login form
+                // 2. Check if this staff has a temp_password record
+                PreparedStatement tempStmt = conn.prepareStatement("SELECT password FROM temp_password WHERE staff_id = ?");
+                tempStmt.setInt(1, staffId);
+                ResultSet tempRs = tempStmt.executeQuery();
+
+                if (tempRs.next()) {
+                    // Temp password flow
+                    String tempPassword = tempRs.getString("password");
+
+                    if (password.equals(tempPassword)) {
+                        // Ask user to set a new password
+                        JPasswordField newPasswordField = new JPasswordField();
+                        JPasswordField confirmField = new JPasswordField();
+                        Object[] message = {
+                            "New Password:", newPasswordField,
+                            "Confirm Password:", confirmField
+                        };
+                        int option = JOptionPane.showConfirmDialog(this, message, "Reset Your Password", JOptionPane.OK_CANCEL_OPTION);
+
+                        if (option == JOptionPane.OK_OPTION) {
+                            String newPassword = new String(newPasswordField.getPassword());
+                            String confirmPassword = new String(confirmField.getPassword());
+
+                            if (newPassword.isEmpty() || !newPassword.equals(confirmPassword)) {
+                                JOptionPane.showMessageDialog(this, "Passwords do not match or are empty.");
+                                return;
+                            }
+
+                            // Hash new password
+                            String hashedNewPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+
+                            // Update in staffs table
+                            PreparedStatement updateStmt = conn.prepareStatement("UPDATE staffs SET password = ? WHERE id = ?");
+                            updateStmt.setString(1, hashedNewPassword);
+                            updateStmt.setInt(2, staffId);
+                            updateStmt.executeUpdate();
+
+                            // Delete temp password
+                            PreparedStatement deleteStmt = conn.prepareStatement("DELETE FROM temp_password WHERE staff_id = ?");
+                            deleteStmt.setInt(1, staffId);
+                            deleteStmt.executeUpdate();
+
+                            JOptionPane.showMessageDialog(this, "Password reset successfully. You may now log in.");
+
+                            // Clear fields
+                            UsernameTextField.setText("");
+                            PasswordField.setText("");
+                            return;
+                        }
+
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Invalid username or password.");
+                        return;
+                    }
+                } else {
+                    // Normal login flow (no temp password)
+                    if (BCrypt.checkpw(password, storedHashedPassword)) {
+                        Main main = new Main(staffId, admin, fullname);
+                        main.setVisible(true);
+                        this.dispose();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Invalid username or password.");
+                    }
+                }
+
             } else {
-                JOptionPane.showMessageDialog(this, "Invalid username or password", "Login Failed", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Invalid username or password.");
             }
-        } catch (SQLException e) {
+
+        } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error reading login result", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage());
         }
     }//GEN-LAST:event_LoginButtonActionPerformed
 

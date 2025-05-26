@@ -13,7 +13,6 @@ import javax.swing.JPasswordField;
  */
 public class AddRoomType extends javax.swing.JFrame {
     
-    Database db = new Database(this);
     int staff_id;
  
     // CONSTRUCTOR
@@ -21,6 +20,8 @@ public class AddRoomType extends javax.swing.JFrame {
        this.staff_id = staff_id;
        
       initComponents();
+      
+      Database.parent = this;
       
     }
    
@@ -37,7 +38,7 @@ public class AddRoomType extends javax.swing.JFrame {
 
         if (option == JOptionPane.OK_OPTION) {
             String inputPassword = new String(passwordField.getPassword());
-            boolean isCorrect = db.CheckPassword(this.staff_id, inputPassword);
+            boolean isCorrect = Database.CheckPassword(this.staff_id, inputPassword);
 
             if (!isCorrect) {
                 JOptionPane.showMessageDialog(this, "Incorrect password.", "Authentication Failed", JOptionPane.ERROR_MESSAGE);
@@ -78,7 +79,7 @@ public class AddRoomType extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setAlwaysOnTop(true);
-        setLocation(new java.awt.Point(600, 250));
+        setLocation(new java.awt.Point(0, 0));
         setResizable(false);
         setType(java.awt.Window.Type.POPUP);
 
@@ -215,7 +216,7 @@ public class AddRoomType extends javax.swing.JFrame {
             double hr12 = Double.parseDouble(new String(Hours12TextField.getText()));
             double hr24 = Double.parseDouble(new String(Hours24TextField.getText()));
 
-            boolean success = db.AddRoomType(type, hr3, hr6, hr10, hr12, hr24);
+            boolean success = Database.AddRoomType(type, hr3, hr6, hr10, hr12, hr24);
 
             if (success) {
                 JOptionPane.showMessageDialog(this, "Room type added successfully!");

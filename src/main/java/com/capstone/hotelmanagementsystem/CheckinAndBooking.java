@@ -5,15 +5,17 @@
 package com.capstone.hotelmanagementsystem;
 
 import com.capstone.hotelmanagementsystem.objects.TransactionInfo;
+import java.awt.Color;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerDateModel;
 import javax.swing.SpinnerNumberModel;
+import org.jdesktop.swingx.JXMonthView;
 
 /**
  *
@@ -21,7 +23,6 @@ import javax.swing.SpinnerNumberModel;
  */
 public class CheckinAndBooking extends javax.swing.JFrame {
     boolean isForBooking;
-    Database db = new Database(this);
     int guest;
     int staff;
     double price;
@@ -55,7 +56,7 @@ public class CheckinAndBooking extends javax.swing.JFrame {
     void LoadRomsTypes() {
         
         // Execute Database method for that
-        ResultSet data = db.LoadRoomTypeName();
+        ResultSet data = Database.LoadRoomTypeName();
         
         // Setting the data for room combobox
         try {
@@ -130,7 +131,10 @@ public class CheckinAndBooking extends javax.swing.JFrame {
         this.isForBooking = isForBooking;
         this.guest = guest;
         this.staff = staff;
+        
         initComponents();
+        
+        Database.parent = this;
 
         PeopleSpinner.setModel(new SpinnerNumberModel(1, 1, 10, 1));
         PeopleSpinner.setValue(1);
@@ -185,7 +189,6 @@ public class CheckinAndBooking extends javax.swing.JFrame {
         // Duration
         this.LoadRomsTypes();
         
-        
     }
 
 
@@ -228,7 +231,7 @@ public class CheckinAndBooking extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setAlwaysOnTop(true);
-        setLocation(new java.awt.Point(600, 250));
+        setLocation(new java.awt.Point(0, 0));
         setResizable(false);
         setType(java.awt.Window.Type.POPUP);
 
@@ -309,6 +312,11 @@ public class CheckinAndBooking extends javax.swing.JFrame {
         jLabel12.setText("Room:");
 
         RoomComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { " " }));
+        RoomComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                RoomComboBoxActionPerformed(evt);
+            }
+        });
 
         jLabel13.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
         jLabel13.setText("Checkout:");
@@ -330,12 +338,6 @@ public class CheckinAndBooking extends javax.swing.JFrame {
                 .addComponent(jSeparator1)
                 .addContainerGap())
             .addComponent(jSeparator2)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(SubmitButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 134, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(PriceLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
@@ -390,6 +392,12 @@ public class CheckinAndBooking extends javax.swing.JFrame {
                                     .addComponent(CheckoutSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addGap(0, 0, Short.MAX_VALUE))))))
                 .addContainerGap(28, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(SubmitButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 134, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(PriceLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -439,9 +447,9 @@ public class CheckinAndBooking extends javax.swing.JFrame {
                 .addComponent(DurationLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(DownpaymentLabel)
-                .addGap(13, 13, 13)
-                .addComponent(PriceLabel)
                 .addGap(18, 18, 18)
+                .addComponent(PriceLabel)
+                .addGap(13, 13, 13)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 9, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(SubmitButton, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -472,13 +480,13 @@ public class CheckinAndBooking extends javax.swing.JFrame {
         );
         
         // Execute the database method for that
-        boolean checkinOrBooked = db.CheckinGuest(transaction, isForBooking ? "Booked" : "Active");
+        boolean checkinOrBooked = Database.CheckinGuest(transaction, isForBooking ? "Booked" : "Active");
         
         if (checkinOrBooked) {
             JOptionPane.showMessageDialog(this, "Congratulations the transaction is successfull.", "Transaction Success", JOptionPane.INFORMATION_MESSAGE);
             
             // Save the transaction
-            boolean transact = db.SaveTransaction(transaction);
+            boolean transact = Database.SaveTransaction(transaction);
            
             this.dispose();
         } else {
@@ -488,70 +496,95 @@ public class CheckinAndBooking extends javax.swing.JFrame {
     }//GEN-LAST:event_SubmitButtonActionPerformed
 
     private void CategoryComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CategoryComboBoxActionPerformed
-        // LOAD ROOM PRICES AND AVAILABLE ROOM
-        
         String selectedCategory = CategoryComboBox.getSelectedItem().toString();
         CategoryLabel.setText("Category: " + selectedCategory);
-        
-        // Reset comboxes
+
         DurationComboBox.removeAllItems();
-        RoomComboBox.removeAllItems();
-        
-        // Setting the data for duration
+        RoomComboBox.removeAllItems(); // Clear previous rooms
+
         try {
-            
-            ResultSet data = db.LoadRoomPrice(selectedCategory);
-            
+            ResultSet data = Database.LoadRoomPrice(selectedCategory);
             while (data.next()) {
-                DurationComboBox.addItem("3 Hours: " + String.valueOf(data.getDouble("hr3_price")));
-                DurationComboBox.addItem("6 Hours: " + String.valueOf(data.getDouble("hr6_price")));
-                DurationComboBox.addItem("10 Hours: " + String.valueOf(data.getDouble("hr10_price")));
-                DurationComboBox.addItem("12 Hours: " + String.valueOf(data.getDouble("hr12_price")));
-                DurationComboBox.addItem("24 Hours: " + String.valueOf(data.getDouble("hr24_price")));
+                DurationComboBox.addItem("3 Hours: " + data.getDouble("hr3_price"));
+                DurationComboBox.addItem("6 Hours: " + data.getDouble("hr6_price"));
+                DurationComboBox.addItem("10 Hours: " + data.getDouble("hr10_price"));
+                DurationComboBox.addItem("12 Hours: " + data.getDouble("hr12_price"));
+                DurationComboBox.addItem("24 Hours: " + data.getDouble("hr24_price"));
             }
-            
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error on loading room prices for combobox.", "Price of Room Load Failed", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error loading room prices.", "Error", JOptionPane.ERROR_MESSAGE);
         }
-        
-        // Setting the data for available room
-        try {
-            
-            ResultSet data = db.LoadRooms(true, selectedCategory);
-            
-            while (data.next()) {
-                RoomComboBox.addItem(data.getString("room_number"));
-            }
-            
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error on loading room prices for combobox.", "Price of Room Load Failed", JOptionPane.ERROR_MESSAGE);
-        }
-        
+
     }//GEN-LAST:event_CategoryComboBoxActionPerformed
 
     private void DurationComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DurationComboBoxActionPerformed
         
         String selectedItem = DurationComboBox.getSelectedItem().toString();
         DurationLabel.setText("Duration: " + selectedItem);
-        
+
         String[] splitItem = selectedItem.split(":");
         price = Double.parseDouble(splitItem[1].trim());
         downpayment = 0;
-        
+
         if (isForBooking) {
             downpayment = price * 0.20;
             price = price - downpayment;
         }
-        
+
         DownpaymentLabel.setText("Downpayment: " + downpayment);
-        PriceLabel.setText("Price: ₱" + price);
-        
-        this.updateCheckoutDateTimeFromDuration();
-        
+        PriceLabel.setText("Price: " + price);
+
+        this.updateCheckoutDateTimeFromDuration(); // still useful
+
+        // ✅ Load available rooms here
+        RoomComboBox.removeAllItems(); // Clear to prevent duplication
+
+        String selectedCategory = CategoryComboBox.getSelectedItem().toString();
+        Date checkinDate = CheckinDatePicker.getDate();
+        Date checkinDateTime = combineDateAndTime(checkinDate, CheckinSpinner);
+
+        try {
+            String[] parts = selectedItem.split(" ");
+            int hours = Integer.parseInt(parts[0]);
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(checkinDateTime);
+            cal.add(Calendar.HOUR_OF_DAY, hours);
+            Date checkoutDateTime = cal.getTime();
+
+            ResultSet roomData = Database.LoadAvailableRooms(checkinDateTime, checkoutDateTime, selectedCategory);
+            while (roomData.next()) {
+                RoomComboBox.addItem(roomData.getString("room_number"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Failed to load available rooms.", "Room Load Error", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_DurationComboBoxActionPerformed
 
+    private void HighlightAndBlockUnavailableDates(List<Date> dates) {
+        JXMonthView monthView = CheckinDatePicker.getMonthView();
+
+        // Highlight (flag) the unavailable dates in blue
+        monthView.clearFlaggedDates();
+        monthView.setFlaggedDates(dates.toArray(new Date[0]));
+        monthView.setFlaggedDayForeground(Color.BLUE);
+
+        // Disable (make unselectable) the unavailable dates
+        monthView.setUnselectableDates(dates.toArray(new Date[0]));
+    }
+
+    // Helper to check if two dates are the same day
+    private boolean isSameDay(Date d1, Date d2) {
+        Calendar c1 = Calendar.getInstance();
+        Calendar c2 = Calendar.getInstance();
+        c1.setTime(d1);
+        c2.setTime(d2);
+        return c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR)
+            && c1.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR);
+    }
+    
     private void CheckinDatePickerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CheckinDatePickerActionPerformed
        this.updateCheckoutDateTimeFromDuration();
     }//GEN-LAST:event_CheckinDatePickerActionPerformed
@@ -559,6 +592,22 @@ public class CheckinAndBooking extends javax.swing.JFrame {
     private void CheckinSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_CheckinSpinnerStateChanged
         this.updateCheckoutDateTimeFromDuration();
     }//GEN-LAST:event_CheckinSpinnerStateChanged
+
+    private void RoomComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RoomComboBoxActionPerformed
+        // Prevent execution during combo box population or if nothing meaningful is selected
+        Object selectedItem = RoomComboBox.getSelectedItem();
+
+        if (selectedItem == null || selectedItem.toString().trim().isEmpty() || selectedItem.toString().equalsIgnoreCase("Select a room")) {
+            return; // Don't show the dialog here, just return silently
+        }
+
+        String roomNumber = selectedItem.toString();
+
+        // Proceed with loading and highlighting unavailable dates
+        List<Date> unavailableDates = Database.LoadUnavailableCheckinDates(roomNumber);
+        HighlightAndBlockUnavailableDates(unavailableDates);
+        
+    }//GEN-LAST:event_RoomComboBoxActionPerformed
 
     /**
      * @param args the command line arguments

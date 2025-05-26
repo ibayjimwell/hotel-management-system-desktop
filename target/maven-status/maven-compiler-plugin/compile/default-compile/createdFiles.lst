@@ -10,6 +10,7 @@ com\capstone\hotelmanagementsystem\Main$35.class
 com\capstone\hotelmanagementsystem\Main$15.class
 com\capstone\hotelmanagementsystem\Main$25.class
 com\capstone\hotelmanagementsystem\Main$4.class
+com\capstone\hotelmanagementsystem\Main$45.class
 com\capstone\hotelmanagementsystem\AddStaff$2.class
 com\capstone\hotelmanagementsystem\Main$21.class
 com\capstone\hotelmanagementsystem\AddStaff$7.class
@@ -22,6 +23,7 @@ com\capstone\hotelmanagementsystem\Main$13.class
 com\capstone\hotelmanagementsystem\Main$33.class
 com\capstone\hotelmanagementsystem\Main$24.class
 com\capstone\hotelmanagementsystem\Main$39.class
+com\capstone\hotelmanagementsystem\NotificationManager.class
 com\capstone\hotelmanagementsystem\CheckinAndBooking$1.class
 com\capstone\hotelmanagementsystem\Main$3.class
 com\capstone\hotelmanagementsystem\Main$44.class
@@ -43,6 +45,7 @@ com\capstone\hotelmanagementsystem\CheckinAndBooking.class
 com\capstone\hotelmanagementsystem\AddStaff$4.class
 com\capstone\hotelmanagementsystem\Main$6.class
 com\capstone\hotelmanagementsystem\Main$43.class
+com\capstone\hotelmanagementsystem\CheckinStatusUpdater.class
 com\capstone\hotelmanagementsystem\Login.class
 com\capstone\hotelmanagementsystem\Main$9.class
 com\capstone\hotelmanagementsystem\objects\TransactionInfo.class
@@ -53,6 +56,7 @@ com\capstone\hotelmanagementsystem\AddRoom$1.class
 com\capstone\hotelmanagementsystem\CheckinAndBooking$2.class
 com\capstone\hotelmanagementsystem\HotelManagementSystem.class
 com\capstone\hotelmanagementsystem\Main$11.class
+com\capstone\hotelmanagementsystem\Main$46.class
 com\capstone\hotelmanagementsystem\Main$18.class
 com\capstone\hotelmanagementsystem\Main$26.class
 com\capstone\hotelmanagementsystem\Main$2.class
@@ -60,6 +64,8 @@ com\capstone\hotelmanagementsystem\Main$38.class
 com\capstone\hotelmanagementsystem\Database.class
 com\capstone\hotelmanagementsystem\AddRoom.class
 com\capstone\hotelmanagementsystem\Main$23.class
+com\capstone\hotelmanagementsystem\PasswordHasher.class
+com\capstone\hotelmanagementsystem\CheckinAndBooking$6.class
 com\capstone\hotelmanagementsystem\AddRoomType$1.class
 com\capstone\hotelmanagementsystem\AddStaff$3.class
 com\capstone\hotelmanagementsystem\Main$14.class

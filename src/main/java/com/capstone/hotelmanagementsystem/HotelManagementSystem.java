@@ -22,6 +22,12 @@ public class HotelManagementSystem {
             ex.printStackTrace();
         }
         
+        // Initialize the Database once
+        Database db = new Database(null); // No parent JFrame here
+        
+        // Start NotificationManager with shared connection
+        NotificationManager.start(Database.getConnection());
+        
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {

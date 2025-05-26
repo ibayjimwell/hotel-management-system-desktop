@@ -6,14 +6,14 @@ package com.capstone.hotelmanagementsystem;
 
 import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
+import javax.swing.UIManager;
 
 /**
  *
  * @author Admin
  */
 public class AddStaff extends javax.swing.JFrame {
-    
-    Database db = new Database(this);
+   
     int staff_id;
  
     // CONSTRUCTOR
@@ -21,6 +21,8 @@ public class AddStaff extends javax.swing.JFrame {
        this.staff_id = staff_id;
        
       initComponents();
+      
+      Database.parent = this;
       
     }
    
@@ -37,7 +39,7 @@ public class AddStaff extends javax.swing.JFrame {
 
         if (option == JOptionPane.OK_OPTION) {
             String inputPassword = new String(passwordField.getPassword());
-            boolean isCorrect = db.CheckPassword(this.staff_id, inputPassword);
+            boolean isCorrect = Database.CheckPassword(this.staff_id, inputPassword);
 
             if (!isCorrect) {
                 JOptionPane.showMessageDialog(this, "Incorrect password.", "Authentication Failed", JOptionPane.ERROR_MESSAGE);
@@ -87,11 +89,12 @@ public class AddStaff extends javax.swing.JFrame {
         jLabel12 = new javax.swing.JLabel();
         UsernameTextField = new javax.swing.JTextField();
         jLabel13 = new javax.swing.JLabel();
-        PasswordTextField = new javax.swing.JTextField();
+        TempPassword = new javax.swing.JPasswordField();
+        ShowPasswordCb = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setAlwaysOnTop(true);
-        setLocation(new java.awt.Point(600, 250));
+        setLocation(new java.awt.Point(0, 0));
         setResizable(false);
         setType(java.awt.Window.Type.POPUP);
 
@@ -199,12 +202,14 @@ public class AddStaff extends javax.swing.JFrame {
         });
 
         jLabel13.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
-        jLabel13.setText("Password:");
+        jLabel13.setText("Temp Password:");
 
-        PasswordTextField.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        PasswordTextField.addActionListener(new java.awt.event.ActionListener() {
+        TempPassword.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+
+        ShowPasswordCb.setText("Show password");
+        ShowPasswordCb.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                PasswordTextFieldActionPerformed(evt);
+                ShowPasswordCbActionPerformed(evt);
             }
         });
 
@@ -216,45 +221,6 @@ public class AddStaff extends javax.swing.JFrame {
             .addGroup(GuestFormPanelLayout.createSequentialGroup()
                 .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(GuestFormPanelLayout.createSequentialGroup()
-                        .addGap(16, 16, 16)
-                        .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(GuestFormPanelLayout.createSequentialGroup()
-                                .addGap(75, 75, 75)
-                                .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(FemaleRadio)
-                                    .addComponent(MaleRadio))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(GuestFormPanelLayout.createSequentialGroup()
-                        .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jSeparator3)
-                            .addGroup(GuestFormPanelLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(GuestFormPanelLayout.createSequentialGroup()
-                                        .addGap(12, 12, 12)
-                                        .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                            .addGroup(GuestFormPanelLayout.createSequentialGroup()
-                                                .addComponent(jLabel19)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(PhoneTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 388, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                            .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addGroup(GuestFormPanelLayout.createSequentialGroup()
-                                                    .addGap(14, 14, 14)
-                                                    .addComponent(jLabel18)
-                                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                    .addComponent(EmailTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 388, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(GuestFormPanelLayout.createSequentialGroup()
-                                        .addComponent(ClearButton, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(SubmitButton, javax.swing.GroupLayout.DEFAULT_SIZE, 273, Short.MAX_VALUE)))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
-                .addComponent(jSeparator5, javax.swing.GroupLayout.DEFAULT_SIZE, 4, Short.MAX_VALUE))
-            .addGroup(GuestFormPanelLayout.createSequentialGroup()
-                .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(GuestFormPanelLayout.createSequentialGroup()
                         .addGap(14, 14, 14)
                         .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(GuestFormPanelLayout.createSequentialGroup()
@@ -262,30 +228,68 @@ public class AddStaff extends javax.swing.JFrame {
                         .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(GuestFormPanelLayout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, GuestFormPanelLayout.createSequentialGroup()
+                    .addGroup(GuestFormPanelLayout.createSequentialGroup()
                         .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(GuestFormPanelLayout.createSequentialGroup()
-                                .addGap(29, 29, 29)
+                                .addGap(12, 12, 12)
                                 .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(jLabel10)
-                                    .addComponent(jLabel11)
-                                    .addComponent(jLabel9)))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, GuestFormPanelLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jLabel12)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                    .addGroup(GuestFormPanelLayout.createSequentialGroup()
+                                        .addComponent(jLabel19)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(PhoneTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 388, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGroup(GuestFormPanelLayout.createSequentialGroup()
+                                            .addGap(14, 14, 14)
+                                            .addComponent(jLabel18)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(EmailTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 388, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGroup(GuestFormPanelLayout.createSequentialGroup()
+                                            .addGap(75, 75, 75)
+                                            .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addComponent(FemaleRadio)
+                                                .addComponent(MaleRadio)))))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(GuestFormPanelLayout.createSequentialGroup()
+                                .addComponent(ClearButton, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(SubmitButton, javax.swing.GroupLayout.DEFAULT_SIZE, 273, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jSeparator5, javax.swing.GroupLayout.DEFAULT_SIZE, 4, Short.MAX_VALUE))
+                    .addGroup(GuestFormPanelLayout.createSequentialGroup()
+                        .addComponent(jSeparator3)
+                        .addContainerGap())))
+            .addGroup(GuestFormPanelLayout.createSequentialGroup()
+                .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(GuestFormPanelLayout.createSequentialGroup()
+                        .addGap(14, 14, 14)
+                        .addComponent(jLabel13))
+                    .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(GuestFormPanelLayout.createSequentialGroup()
+                            .addGap(29, 29, 29)
+                            .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(jLabel10)
+                                .addComponent(jLabel11)
+                                .addComponent(jLabel9)))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, GuestFormPanelLayout.createSequentialGroup()
+                            .addContainerGap()
+                            .addComponent(jLabel12))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(GuestFormPanelLayout.createSequentialGroup()
                         .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(UsernameTextField)
                             .addComponent(MiddleNameTextField, javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(FirstNameTextField, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(LastNameTextField, javax.swing.GroupLayout.Alignment.LEADING)))
+                            .addComponent(LastNameTextField, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(TempPassword))
+                        .addGap(36, 36, 36))
                     .addGroup(GuestFormPanelLayout.createSequentialGroup()
-                        .addGap(54, 54, 54)
-                        .addComponent(jLabel13)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(PasswordTextField)))
-                .addGap(36, 36, 36))
+                        .addComponent(ShowPasswordCb, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         GuestFormPanelLayout.setVerticalGroup(
             GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -315,22 +319,23 @@ public class AddStaff extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel13)
-                    .addComponent(PasswordTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(TempPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(ShowPasswordCb)
+                .addGap(9, 9, 9)
                 .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(GuestFormPanelLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, GuestFormPanelLayout.createSequentialGroup()
                         .addComponent(jSeparator5, javax.swing.GroupLayout.PREFERRED_SIZE, 3, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(174, 174, 174))
                     .addGroup(GuestFormPanelLayout.createSequentialGroup()
-                        .addGap(18, 18, 18)
                         .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel16)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(MaleRadio)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(FemaleRadio)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel17)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -340,7 +345,7 @@ public class AddStaff extends javax.swing.JFrame {
                         .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel19)
                             .addComponent(PhoneTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 29, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 36, Short.MAX_VALUE)
                         .addGroup(GuestFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(ClearButton, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(SubmitButton, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -401,45 +406,93 @@ public class AddStaff extends javax.swing.JFrame {
     }//GEN-LAST:event_ClearButtonActionPerformed
 
     private void SubmitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SubmitButtonActionPerformed
-        // Step 1: Validate password
+        // Step 1: Validate password prompt
         if (!PromptAndCheckPassword()) {
             return;
         }
 
-        // Step 2: Get form input values
-        String firstName = FirstNameTextField.getText();
-        String middleName = MiddleNameTextField.getText();
-        String lastName = LastNameTextField.getText();
-        String gender = MaleRadio.isSelected() ? "Male" : (FemaleRadio.isSelected() ? "Female" : "");
-        String email = EmailTextField.getText();
-        String phone = PhoneTextField.getText();
-        String username = UsernameTextField.getText();
-        String password = PasswordTextField.getText();
+        boolean isFormValid = true;
 
-        // Step 3: Validate required fields
-        if (firstName.isEmpty() || lastName.isEmpty() || gender.isEmpty() || email.isEmpty() || phone.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please fill in all required fields.", "Missing Information", JOptionPane.WARNING_MESSAGE);
-            return;
+        if (FirstNameTextField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Double check the credentials make sure to fill-up all required field.", "The First Name is required.", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
         }
 
-        // Step 4: Call database to add staff
-        boolean success = db.AddStaff(firstName, middleName, lastName, gender, email, phone, false, username, password);
-
-        if (success) {
-            JOptionPane.showMessageDialog(this, "Staff added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-            dispose(); // Close the form
-        } else {
-            // Error message already handled inside AddStaff
+        if (LastNameTextField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Double check the credentials make sure to fill-up all required field.", "The Last Name is required.", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
         }
+
+        if (!MaleRadio.isSelected() && !FemaleRadio.isSelected()) {
+            JOptionPane.showMessageDialog(this, "Double check the credentials make sure to select a gender.", "The Gender is required.", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        }
+
+        if (PhoneTextField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Contact Number is required.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        } else if (!PhoneTextField.getText().matches("\\d+")) {
+            JOptionPane.showMessageDialog(this, "Contact Number must be digits.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        } else if (!(PhoneTextField.getText().length() == 11)) {
+            JOptionPane.showMessageDialog(this, "Contact Number must be 11 digits.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        } else if (!PhoneTextField.getText().startsWith("09")) {
+            JOptionPane.showMessageDialog(this, "Contact Number must start with 09.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        }
+
+        if (EmailTextField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Email Address is required.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        } else if (!EmailTextField.getText().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            JOptionPane.showMessageDialog(this, "Email Address is invalid.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            isFormValid = false;
+        }
+
+        if (isFormValid) {
+            // Step 2: Get form input values
+            String firstName = FirstNameTextField.getText();
+            String middleName = MiddleNameTextField.getText();
+            String lastName = LastNameTextField.getText();
+            String gender = MaleRadio.isSelected() ? "Male" : (FemaleRadio.isSelected() ? "Female" : "");
+            String email = EmailTextField.getText();
+            String phone = PhoneTextField.getText();
+            String username = UsernameTextField.getText();
+            String tempPassword = TempPassword.getText();
+
+            // Step 3: Validate required fields again (safety)
+            if (firstName.isEmpty() || lastName.isEmpty() || gender.isEmpty() || email.isEmpty() || phone.isEmpty() || tempPassword.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please fill in all required fields including temporary password.", "Missing Information", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Step 4: Create staff without password
+            int staffId = Database.AddStaff(firstName, middleName, lastName, gender, email, phone, false, username);
+            if (staffId > 0) {
+                // Step 5: Store temp password in temp_password table
+                Database.setTemporaryPassword(staffId, tempPassword);
+
+                JOptionPane.showMessageDialog(this, "Staff added successfully with a temporary password.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to add staff.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
     }//GEN-LAST:event_SubmitButtonActionPerformed
 
     private void UsernameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UsernameTextFieldActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_UsernameTextFieldActionPerformed
 
-    private void PasswordTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PasswordTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_PasswordTextFieldActionPerformed
+    private void ShowPasswordCbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ShowPasswordCbActionPerformed
+         if (ShowPasswordCb.isSelected()) {
+            TempPassword.setEchoChar((char) 0); // show password
+        } else {
+            TempPassword.setEchoChar('*'); // mask password
+        }
+    }//GEN-LAST:event_ShowPasswordCbActionPerformed
 
     /**
      * @param args the command line arguments
@@ -455,9 +508,10 @@ public class AddStaff extends javax.swing.JFrame {
     private javax.swing.JTextField LastNameTextField;
     private javax.swing.JRadioButton MaleRadio;
     private javax.swing.JTextField MiddleNameTextField;
-    private javax.swing.JTextField PasswordTextField;
     private javax.swing.JTextField PhoneTextField;
+    private javax.swing.JCheckBox ShowPasswordCb;
     private javax.swing.JButton SubmitButton;
+    private javax.swing.JPasswordField TempPassword;
     private javax.swing.JLabel Title;
     private javax.swing.JPanel TopPanel4;
     private javax.swing.JTextField UsernameTextField;
